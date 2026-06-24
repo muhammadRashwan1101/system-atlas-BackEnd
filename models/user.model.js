@@ -1,4 +1,4 @@
-const mongoose = required("mongoose");
+const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
     firstName: {
@@ -11,7 +11,10 @@ const userSchema = new mongoose.Schema({
     },
     email: {
         type: String,
-        required: true
+        required: true,
+        unique: true,
+        trim: true,
+        lowercase: true
     },
     password: {
         type: String,

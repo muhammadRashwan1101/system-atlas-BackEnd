@@ -1,4 +1,4 @@
-const mongoose = required("mongoose");
+const mongoose = require("mongoose");
 
 const componentSchema = new mongoose.Schema({
     name: {

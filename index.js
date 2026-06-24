@@ -3,7 +3,9 @@ const app = express()
 const dotenv = require('dotenv')
 const connectDB = require('./db/db')
 const authRouter = require('./routes/authRoutes')
+const cors = require('cors')
 
+app.use(cors({ origin: 'http://localhost:5173' }))
 dotenv.config()
 
 app.use(express.json())
