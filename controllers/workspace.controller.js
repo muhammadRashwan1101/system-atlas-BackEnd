@@ -1,7 +1,7 @@
 const Workspace = require("../models/workspace.model");
-const {workspaceValidation} = require("./validation/workspaceValidation");
+const { workspaceValidation } = require("./validation/workspaceValidation");
 
-const createWorkspace = async (req, res) => {
+const createWorkspace = async (req, res, next) => {
   try {
     const { error, value } = workspaceValidation.validate(req.body, {
       abortEarly: false,
@@ -9,8 +9,9 @@ const createWorkspace = async (req, res) => {
     });
 
     if (error) {
-      console.log(error.details.map((err) => err.message));
-      return res.status(400).json({ msg: error.details.map((err) => err.message) });
+      return res.status(400).json({
+        msg: error.details.map((err) => err.message),
+      });
     }
 
     const existingWorkspace = await Workspace.findOne({
@@ -18,7 +19,6 @@ const createWorkspace = async (req, res) => {
       name: value.name,
     });
 
-    //Prevent Duplicates
     if (existingWorkspace) {
       return res.status(400).json({
         msg: "Workspace name already exists",
@@ -31,27 +31,35 @@ const createWorkspace = async (req, res) => {
     };
 
     const newWorkspace = await Workspace.create(workspaceData);
-    res
-      .status(201)
-      .json({ msg: "Workspace Created Successfully", workspace: newWorkspace });
+
+    res.status(201).json({
+      msg: "Workspace Created Successfully",
+      workspace: newWorkspace,
+    });
+
   } catch (error) {
-    res.status(500).json({ msg: error.message });
+    next(error);
   }
 };
 
-const getWorkspaces = async (req, res) => {
+
+const getWorkspaces = async (req, res, next) => {
   try {
-    const workspaces = await Workspace.find({ ownerId: req.user._id }).sort({
+    const workspaces = await Workspace.find({
+      ownerId: req.user._id,
+    }).sort({
       createdAt: -1,
     });
 
     res.status(200).json({ workspaces });
+
   } catch (error) {
-    res.status(500).json({ msg: error.message });
+    next(error);
   }
 };
 
-const getWorkspace = async (req, res) => {
+
+const getWorkspace = async (req, res, next) => {
   try {
     const targetWorkspace = await Workspace.findOne({
       _id: req.params.id,
@@ -59,16 +67,22 @@ const getWorkspace = async (req, res) => {
     });
 
     if (!targetWorkspace) {
-      return res.status(404).json({ msg: "Workspace not found" });
+      return res.status(404).json({
+        msg: "Workspace not found",
+      });
     }
 
-    res.status(200).json({ workspace: targetWorkspace });
+    res.status(200).json({
+      workspace: targetWorkspace,
+    });
+
   } catch (error) {
-    res.status(500).json({ msg: error.message });
+    next(error);
   }
 };
 
-const updateWorkspace = async (req, res) => {
+
+const updateWorkspace = async (req, res, next) => {
   try {
     const { error, value } = workspaceValidation.validate(req.body, {
       abortEarly: false,
@@ -76,9 +90,9 @@ const updateWorkspace = async (req, res) => {
     });
 
     if (error) {
-      return res
-        .status(400)
-        .json({ msg: error.details.map((err) => err.message) });
+      return res.status(400).json({
+        msg: error.details.map((err) => err.message),
+      });
     }
 
     const duplicateWorkspace = await Workspace.findOne({
@@ -92,6 +106,7 @@ const updateWorkspace = async (req, res) => {
         msg: "Workspace name already exists",
       });
     }
+
     const targetWorkspace = await Workspace.findOneAndUpdate(
       {
         _id: req.params.id,
@@ -101,22 +116,27 @@ const updateWorkspace = async (req, res) => {
       {
         new: true,
         runValidators: true,
-      },
+      }
     );
+
     if (!targetWorkspace) {
-      return res.status(404).json({ msg: "Workspace not found" });
+      return res.status(404).json({
+        msg: "Workspace not found",
+      });
     }
 
     res.status(200).json({
       msg: "Workspace Updated Successfully",
       workspace: targetWorkspace,
     });
+
   } catch (error) {
-    res.status(500).json({ msg: error.message });
+    next(error);
   }
 };
 
-const deleteWorkspace = async (req, res) => {
+
+const deleteWorkspace = async (req, res, next) => {
   try {
     const targetWorkspace = await Workspace.findOneAndDelete({
       _id: req.params.id,
@@ -124,14 +144,20 @@ const deleteWorkspace = async (req, res) => {
     });
 
     if (!targetWorkspace) {
-      return res.status(404).json({ msg: "Workspace not found" });
+      return res.status(404).json({
+        msg: "Workspace not found",
+      });
     }
 
-    res.status(200).json({ msg: "Workspace Deleted Successfully" });
+    res.status(200).json({
+      msg: "Workspace Deleted Successfully",
+    });
+
   } catch (error) {
-    res.status(500).json({ msg: error.message });
+    next(error);
   }
 };
+
 
 module.exports = {
   createWorkspace,
