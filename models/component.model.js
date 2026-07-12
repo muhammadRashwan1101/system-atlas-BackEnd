@@ -35,9 +35,9 @@ const componentSchema = new mongoose.Schema({
         default: []
     },
     ownerTeam: {
-        type: String,
-        required: true,
-        trim: true
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Team",
+        required: true
     },
     tags: {
         type: [String],
