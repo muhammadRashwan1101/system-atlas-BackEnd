@@ -1,6 +1,6 @@
 const Workspace = require("../models/workspace.model");
 const {workspaceValidation} = require("./validation/workspaceValidation");
-
+const User = require("../models/user.model");
 const createWorkspace = async (req, res) => {
   try {
     const { error, value } = workspaceValidation.validate(req.body, {
@@ -32,9 +32,13 @@ const createWorkspace = async (req, res) => {
 
     
     const newWorkspace = await Workspace.create(workspaceData);
-    res
-      .status(201)
-      .json({ msg: "Workspace Created Successfully", workspace: newWorkspace });
+
+    //For selective entry ( Dashboard vs New Workspace )
+    await User.findByIdAndUpdate(req.user.id, {
+      onboardingStatus: "completed"
+    })
+
+    res.status(201).json({ msg: "Workspace Created Successfully", workspace: newWorkspace });
   } catch (error) {
     res.status(500).json({ msg: error.message });
   }

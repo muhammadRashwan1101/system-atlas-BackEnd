@@ -76,7 +76,9 @@ const currentUser = async (req, res) => {
         const userData = await User.findById(req.user.id).select("-password")
         const user = {
             name: userData.fullName,
-            email: userData.email
+            email: userData.email,
+            role: userData.role,
+            onboarding: userData.onboardingStatus
         }
         if(!user) {
             return res.status(404).json({ msg: "User Not Found" })
