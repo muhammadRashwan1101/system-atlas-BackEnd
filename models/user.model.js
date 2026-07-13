@@ -26,6 +26,11 @@ const userSchema = new mongoose.Schema({
         enum: ["user", "admin", "manager", "techLead"],
         default: "user"
     },
+    onboardingStatus: {
+        type: String,
+        enum: ["pending", "completed"],
+        default: "pending"
+    }
 }, {timestamps: true})
 
 userSchema.virtual("fullName").get(function() {
