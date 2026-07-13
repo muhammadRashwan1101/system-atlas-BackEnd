@@ -14,14 +14,9 @@ const workspaceSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"
     },
-    visibility: {
-        type: String,
-        enum: ["private", "internal"],
-        required: true
-    },
     status: {
         type: String,
-        enum: ["active", "inactive"],
+        enum: ["active", "archived"],
         default: "active"
     }
 }, {timestamps: true})
