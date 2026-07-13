@@ -15,7 +15,7 @@ const createWorkspace = async (req, res, next) => {
     }
 
     const existingWorkspace = await Workspace.findOne({
-      ownerId: req.user._id,
+      ownerId: req.user.id,
       name: value.name,
     });
 
@@ -24,12 +24,13 @@ const createWorkspace = async (req, res, next) => {
         msg: "Workspace name already exists",
       });
     }
-
+    console.log(req.user)
     const workspaceData = {
       ...value,
-      ownerId: req.user._id,
+      ownerId: req.user.id,
     };
 
+    
     const newWorkspace = await Workspace.create(workspaceData);
 
     res.status(201).json({
@@ -45,9 +46,7 @@ const createWorkspace = async (req, res, next) => {
 
 const getWorkspaces = async (req, res, next) => {
   try {
-    const workspaces = await Workspace.find({
-      ownerId: req.user._id,
-    }).sort({
+    const workspaces = await Workspace.find({ ownerId: req.user._id }).populate("ownerId").sort({
       createdAt: -1,
     });
 
@@ -63,8 +62,8 @@ const getWorkspace = async (req, res, next) => {
   try {
     const targetWorkspace = await Workspace.findOne({
       _id: req.params.id,
-      ownerId: req.user._id,
-    });
+      ownerId: req.user.id,
+    }).populate("ownerId");
 
     if (!targetWorkspace) {
       return res.status(404).json({
@@ -96,7 +95,7 @@ const updateWorkspace = async (req, res, next) => {
     }
 
     const duplicateWorkspace = await Workspace.findOne({
-      ownerId: req.user._id,
+      ownerId: req.user.id,
       name: value.name,
       _id: { $ne: req.params.id },
     });
@@ -140,7 +139,7 @@ const deleteWorkspace = async (req, res, next) => {
   try {
     const targetWorkspace = await Workspace.findOneAndDelete({
       _id: req.params.id,
-      ownerId: req.user._id,
+      ownerId: req.user.id,
     });
 
     if (!targetWorkspace) {
