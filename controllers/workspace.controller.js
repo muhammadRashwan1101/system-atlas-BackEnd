@@ -1,8 +1,9 @@
 const Workspace = require("../models/workspace.model");
 const {workspaceValidation} = require("./validation/workspaceValidation");
-const User = require("../models/user.model");
+const CheckRole=require("../middlewares/CheckRoleMiddleware")
 const createWorkspace = async (req, res) => {
   try {
+ 
     const { error, value } = workspaceValidation.validate(req.body, {
       abortEarly: false,
       stripUnknown: true,
@@ -84,6 +85,7 @@ const getWorkspace = async (req, res, next) => {
 
 const updateWorkspace = async (req, res, next) => {
   try {
+   
     const { error, value } = workspaceValidation.validate(req.body, {
       abortEarly: false,
       stripUnknown: true,
@@ -138,6 +140,7 @@ const updateWorkspace = async (req, res, next) => {
 
 const deleteWorkspace = async (req, res, next) => {
   try {
+
     const targetWorkspace = await Workspace.findOneAndDelete({
       _id: req.params.id,
       ownerId: req.user.id,
