@@ -71,7 +71,27 @@ const { loginValidation, signUpValidation } = require("../validation/authValidat
     }
  }
 
+const currentUser = async (req, res) => {
+    try {
+        const userData = await User.findById(req.user.id).select("-password")
+        const user = {
+            name: userData.fullName,
+            email: userData.email,
+            role: userData.role,
+            onboarding: userData.onboardingStatus
+        }
+        if(!user) {
+            return res.status(404).json({ msg: "User Not Found" })
+        }
+        res.status(200).json({ user })
+    } catch (err) {
+        res.status(500).json({ msg: err.message })
+    }
+}
+ 
+
  module.exports = {
     register,
-    login
+    login,
+    currentUser
  }

@@ -28,7 +28,7 @@ const createProject = async (req, res) => {
         const existingWorkspace = await Workspace.findOne({
             _id: req.params.workspaceId,
             ownerId: req.user._id
-        })
+        });
 
         if (!existingWorkspace) {
             return res.status(404).json({
@@ -36,11 +36,14 @@ const createProject = async (req, res) => {
             });
         }
 
+
         const newProject = {
             ...value,
             ownerId: req.user._id,
             workspaceId: req.params.workspaceId
-        }
+        };
+
+
         const project = await Project.create(newProject);
 
         res.status(201).json({ msg: "Project created successfully", project });
@@ -78,13 +81,17 @@ const getProjects = async (req, res) => {
             ownerId: req.user._id
         }).sort({
             createdAt: -1
-        })
+        });
 
-        res.status(200).json({ projects: allProjects });
+
+        res.status(200).json({
+            projects: allProjects
+        });
+
     } catch (error) {
-        res.ststu(500).json({ msg: error.message });
+        next(error);
     }
-}
+};
 
 const getProjectById = async (req, res) => {
     try {
