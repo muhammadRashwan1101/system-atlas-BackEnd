@@ -1,7 +1,7 @@
 const Workspace = require("../models/workspace.model");
 const {workspaceValidation} = require("./validation/workspaceValidation");
 const CheckRole=require("../middlewares/CheckRoleMiddleware")
-const createWorkspace = async (req, res) => {
+const createWorkspace = async (req, res , next) => {
   try {
  
     const { error, value } = workspaceValidation.validate(req.body, {

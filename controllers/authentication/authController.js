@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken")
 const { loginValidation, signUpValidation } = require("../validation/authValidation")
 
 
- const register = async (req,res) => {
+ const register = async (req,res,next) => {
 
     const {error, value } = signUpValidation.validate(req.body, {
         abortEarly: false,
@@ -35,11 +35,11 @@ const { loginValidation, signUpValidation } = require("../validation/authValidat
         email: newUser.email
     }})
     } catch (error) {
-        res.status(500).json({ msg: error.message })
+        next(error)
     }
  }
 
- const login = async (req, res) => {
+ const login = async (req, res ,next) => {
     const {error, value } = loginValidation.validate(req.body, {
         abortEarly: false,
         stripUnknown: true
@@ -57,7 +57,9 @@ const { loginValidation, signUpValidation } = require("../validation/authValidat
         if(!user) {
             return res.status(401).json({ msg: "Wrong Email or Password" })
         }
-
+      if(user.accountStatus === "inactive") {
+            return res.status(403).json({ msg: "This account has been deactivated." })
+        }
         const passwordMatch = await bcrypt.compare(password, user.password)
         delete value.confrimPassword
 
@@ -67,11 +69,11 @@ const { loginValidation, signUpValidation } = require("../validation/authValidat
         const token = jwt.sign({ id: user._id, role: user.role}, process.env.JWT_SECRET, { expiresIn: "1d" })
         res.status(200).json({ msg: `Logged In Successfully. Welcome ${user.fullName}!`, token })
     } catch (error) {
-        res.status(500).json({ msg: error.message })
+       next(error)
     }
  }
 
-const currentUser = async (req, res) => {
+const currentUser = async (req, res ,next) => {
     try {
         const userData = await User.findById(req.user.id).select("-password")
         const user = {
@@ -83,9 +85,10 @@ const currentUser = async (req, res) => {
         if(!user) {
             return res.status(404).json({ msg: "User Not Found" })
         }
+        
         res.status(200).json({ user })
     } catch (err) {
-        res.status(500).json({ msg: err.message })
+        next(err)
     }
 }
  

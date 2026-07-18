@@ -2,7 +2,7 @@ const Project = require("../models/project.model")
 const { projectValidation } = require("../controllers/validation/projectValidation")
 const Workspace = require("../models/workspace.model")
 const CheckRole = require("../middlewares/CheckRoleMiddleware")
-const createProject = async (req, res) => {
+const createProject = async (req, res , next) => {
     try {
         if (!CheckRole(req, res, ["admin", "manager", "techLead"])) return;
         const { error, value } = projectValidation.validate(req.body, {
@@ -48,11 +48,11 @@ const createProject = async (req, res) => {
 
         res.status(201).json({ msg: "Project created successfully", project });
     } catch (error) {
-        res.status(500).json({ msg: error.message });
+        next(error);
     }
 }
 
-const getProjects = async (req, res) => {
+const getProjects = async (req, res , next) => {
     try {
      if (!CheckRole(req, res, ["admin", "manager", "techLead"])) return;
 
@@ -93,7 +93,7 @@ const getProjects = async (req, res) => {
     }
 };
 
-const getProjectById = async (req, res) => {
+const getProjectById = async (req, res , next) => {
     try {
   if (!CheckRole(req, res, ["admin", "manager", "techLead"])) return;
         let query = { 
@@ -127,10 +127,10 @@ const getProjectById = async (req, res) => {
 
         return res.status(200).json({ project });
     } catch (error) {
-        return res.status(500).json({ msg: error.message });
+       next(error);
     }
 };
-const updateProject = async (req, res) => {
+const updateProject = async (req, res , next) => {
     try {
 
         if (!CheckRole(req, res, ["admin", "manager", "techLead"])) return;
@@ -162,11 +162,11 @@ const updateProject = async (req, res) => {
 
         return res.status(200).json({ msg: "Project updated successfully", project: updatedProject });
     } catch (error) {
-        return res.status(500).json({ msg: error.message });
+        next(error);
     }
 };
 
-const deleteProject = async (req, res) => {
+const deleteProject = async (req, res , next) => {
     try {
         if (!CheckRole(req, res, ["admin", "manager"])) return;
 
@@ -182,7 +182,7 @@ const deleteProject = async (req, res) => {
 
         return res.status(200).json({ msg: "Project deleted successfully" });
     } catch (error) {
-        return res.status(500).json({ msg: error.message });
+        next(error);
     }
 };
 module.exports = { createProject, getProjects, getProjectById, updateProject, deleteProject }
