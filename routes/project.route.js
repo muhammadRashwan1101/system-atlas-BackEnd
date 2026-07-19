@@ -1,6 +1,7 @@
 const projectController = require("../controllers/project.controller")
 const authMiddleware = require("../middlewares/authMiddleware")
 const router = require("express").Router()
+const CheckRoleMiddleware = require("../middlewares/CheckRoleMiddleware")
 
 router.use(authMiddleware)
 

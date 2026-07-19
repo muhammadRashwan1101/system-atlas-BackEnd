@@ -1,7 +1,10 @@
 const Workspace = require("../models/workspace.model");
 const {workspaceValidation} = require("./validation/workspaceValidation");
-const CheckRole=require("../middlewares/CheckRoleMiddleware")
-const createWorkspace = async (req, res) => {
+const User = require("../models/user.model");
+const CheckRole = require("../middlewares/CheckRoleMiddleware")
+
+const createWorkspace = async (req, res, next) => {
+  if (!CheckRole(req, res, ["admin"])) return;
   try {
  
     const { error, value } = workspaceValidation.validate(req.body, {
@@ -47,6 +50,7 @@ const createWorkspace = async (req, res) => {
 
 
 const getWorkspaces = async (req, res, next) => {
+  if (!CheckRole(req, res, ["admin", "manager", "techLead"])) return;
   try {
     const workspaces = await Workspace.find({ ownerId: req.user._id }).populate("ownerId").sort({
       createdAt: -1,
@@ -61,6 +65,7 @@ const getWorkspaces = async (req, res, next) => {
 
 
 const getWorkspace = async (req, res, next) => {
+  if (!CheckRole(req, res, ["admin"])) return;
   try {
     const targetWorkspace = await Workspace.findOne({
       _id: req.params.id,
@@ -84,6 +89,7 @@ const getWorkspace = async (req, res, next) => {
 
 
 const updateWorkspace = async (req, res, next) => {
+  if (!CheckRole(req, res, ["admin"])) return;
   try {
    
     const { error, value } = workspaceValidation.validate(req.body, {
@@ -139,6 +145,7 @@ const updateWorkspace = async (req, res, next) => {
 
 
 const deleteWorkspace = async (req, res, next) => {
+  if (!CheckRole(req, res, ["admin"])) return;
   try {
 
     const targetWorkspace = await Workspace.findOneAndDelete({

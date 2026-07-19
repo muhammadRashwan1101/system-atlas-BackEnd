@@ -27,7 +27,7 @@ const createProject = async (req, res) => {
 
         const existingWorkspace = await Workspace.findOne({
             _id: req.params.workspaceId,
-            ownerId: req.user._id
+            ownerId: req.user.id
         });
 
         if (!existingWorkspace) {
@@ -39,7 +39,7 @@ const createProject = async (req, res) => {
 
         const newProject = {
             ...value,
-            ownerId: req.user._id,
+            ownerId: req.user.id,
             workspaceId: req.params.workspaceId
         };
 
@@ -64,21 +64,21 @@ const getProjects = async (req, res) => {
      
             const userTeams = await Team.find({
                 $or: [
-                    { members: req.user._id },
-                    { teamLead: req.user._id }
+                    { members: req.user.id },
+                    { teamLead: req.user.id }
                 ]
             }).select("_id");
             
             const teamIds = userTeams.map(team => team._id);
 
             query.$or = [
-                { ownerId: req.user._id },
+                { ownerId: req.user.id },
                 { ownerTeam: { $in: teamIds } }
             ];
         }
         const allProjects = await Project.find({
             workspaceId: req.params.workspaceId,
-            ownerId: req.user._id
+            ownerId: req.user.id
         }).sort({
             createdAt: -1
         });
@@ -106,8 +106,8 @@ const getProjectById = async (req, res) => {
       
             const userTeams = await Team.find({
                 $or: [
-                    { members: req.user._id },
-                    { teamLead: req.user._id }
+                    { members: req.user.id },
+                    { teamLead: req.user.id }
                 ]
             }).select("_id");
 
@@ -115,7 +115,7 @@ const getProjectById = async (req, res) => {
 
           
             query.$or = [
-                { ownerId: req.user._id },
+                { ownerId: req.user.id },
                 { ownerTeam: { $in: teamIds } }
             ];
         }
@@ -150,7 +150,7 @@ const updateProject = async (req, res) => {
             {
                 _id: req.params.projectId,
                 workspaceId: req.params.workspaceId,
-                ownerId: req.user._id
+                ownerId: req.user.id
             },
             { $set: value },
             { new: true, runValidators: true }
@@ -173,7 +173,7 @@ const deleteProject = async (req, res) => {
         const deletedProject = await Project.findOneAndDelete({
             _id: req.params.projectId,
             workspaceId: req.params.workspaceId,
-            ownerId: req.user._id
+            ownerId: req.user.id
         });
 
         if (!deletedProject) {

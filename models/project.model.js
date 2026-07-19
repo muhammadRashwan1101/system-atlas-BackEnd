@@ -16,7 +16,7 @@ const projectSchema = new mongoose.Schema({
     ownerTeam: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Team",
-        required: true
+        default: null
     },
     workspaceId: {
         type: mongoose.Schema.Types.ObjectId,
