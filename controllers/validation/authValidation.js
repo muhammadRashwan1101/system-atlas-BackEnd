@@ -22,7 +22,7 @@ const signUpValidation = Joi.object({
     confirmPassword: Joi.string().valid(Joi.ref("password")).required().messages({
         "any.only": "Passwords do not match"
     }),
-    role: Joi.string().valid("user", "admin").default("user")
+    role: Joi.string().valid("user", "admin", "manager", "techLead").default("user")
 })
 
 module.exports = { loginValidation, signUpValidation }

@@ -12,7 +12,7 @@ module.exports = {
         "Material UI"
     ],
     backend: [
-       "Node.js",
+        "Node.js",
         "Express",
         "NestJS",
         "Spring Boot",

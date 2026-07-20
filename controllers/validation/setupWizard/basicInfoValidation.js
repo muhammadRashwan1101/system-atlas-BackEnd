@@ -10,7 +10,7 @@ const basicInfoValidation = joi.object({
         "string.empty": "Component description is required",
         "string.max": "Description cannot exceed 500 characters",
     }),
-     type: Joi.string().valid(
+     type: joi.string().valid(
             "cloud-service",
             "database",
             "api-gateway",

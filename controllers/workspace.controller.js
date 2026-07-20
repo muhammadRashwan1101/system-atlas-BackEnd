@@ -50,9 +50,9 @@ const createWorkspace = async (req, res, next) => {
 
 
 const getWorkspaces = async (req, res, next) => {
-  if (!CheckRole(req, res, ["admin", "manager", "techLead"])) return;
+  if (!CheckRole(req, res, ["admin"])) return;
   try {
-    const workspaces = await Workspace.find({ ownerId: req.user._id }).populate("ownerId").sort({
+    const workspaces = await Workspace.find({ ownerId: req.user.id }).populate("ownerId").sort({
       createdAt: -1,
     });
 
@@ -68,7 +68,7 @@ const getWorkspace = async (req, res, next) => {
   if (!CheckRole(req, res, ["admin"])) return;
   try {
     const targetWorkspace = await Workspace.findOne({
-      _id: req.params.id,
+      _id: req.params.workspaceId,
       ownerId: req.user.id,
     }).populate("ownerId");
 
@@ -117,7 +117,7 @@ const updateWorkspace = async (req, res, next) => {
 
     const targetWorkspace = await Workspace.findOneAndUpdate(
       {
-        _id: req.params.id,
+        _id: req.params.workspaceId,
         ownerId: req.user.id,
       },
       value,
@@ -149,7 +149,7 @@ const deleteWorkspace = async (req, res, next) => {
   try {
 
     const targetWorkspace = await Workspace.findOneAndDelete({
-      _id: req.params.id,
+      _id: req.params.workspaceId,
       ownerId: req.user.id,
     });
 
