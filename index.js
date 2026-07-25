@@ -14,7 +14,7 @@ app.use(express.json())
 
 app.use('/api/auth', authRouter)
 app.use('/api/workspace', workspaceRouter)
-app.use('/api/project', ProjectRouter)
+app.use('/api/', ProjectRouter)
 
 connectDB()
 
