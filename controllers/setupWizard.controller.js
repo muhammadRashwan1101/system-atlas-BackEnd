@@ -101,7 +101,8 @@ const updateSetupWizard = async (req, res, next) => {
         const ownerId = req.user.id
         if(ownerId !== existingWorkspace.ownerId.toString() || ownerId !== existingProject.ownerId.toString())   {
             return res.status(401).json({ msg: "Unauthorized" })
-        }  
+        }
+          
         switch(currentWizard.currentStep) {
             case "techStack": {
 

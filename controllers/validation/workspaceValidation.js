@@ -20,4 +20,4 @@ const workspaceValidation = Joi.object({
         })
 });
 
-module.exports = { workspaceValidation }
+module.exports =  workspaceValidation

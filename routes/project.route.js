@@ -1,12 +1,10 @@
 const projectController = require("../controllers/project.controller")
 const authMiddleware = require("../middlewares/authMiddleware")
-const router = require("express").Router()
-const CheckRoleMiddleware = require("../middlewares/CheckRoleMiddleware")
 const setupWizardController = require("../controllers/setupWizard.controller")
+const router = require("express").Router()
+router.use(authMiddleware);
 
-router.use(authMiddleware)
-
-router.route("/:projectId")
+router.route("/:id")
     .get(projectController.getProjectById)
     .patch(projectController.updateProject)
     .delete(projectController.deleteProject)

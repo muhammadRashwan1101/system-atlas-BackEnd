@@ -1,9 +1,9 @@
 const Workspace = require("../models/workspace.model");
-const {workspaceValidation} = require("./validation/workspaceValidation");
-const User = require("../models/user.model");
-const CheckRole = require("../middlewares/CheckRoleMiddleware")
-
-const createWorkspace = async (req, res, next) => {
+const workspaceValidation= require("./validation/workspaceValidation");
+const CheckRole=require("../middlewares/CheckRoleMiddleware")
+const User=require("../models/user.model")
+const Joi = require("joi");
+const createWorkspace = async (req, res,next) => {
   if (!CheckRole(req, res, ["admin"])) return;
   try {
  
@@ -32,6 +32,7 @@ const createWorkspace = async (req, res, next) => {
     const workspaceData = {
       ...value,
       ownerId: req.user.id,
+      
     };
 
     
