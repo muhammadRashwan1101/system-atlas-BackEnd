@@ -1,23 +1,32 @@
-const express = require('express')
-const app = express()
-const dotenv = require('dotenv')
-const connectDB = require('./db/db')
-const authRouter = require('./routes/auth.routes')
-const workspaceRouter = require("./routes/workspace.routes")
-const ProjectRouter=require("./routes/project.route")
-const cors = require('cors')
+const express = require('express');
+const app = express();
+const dotenv = require('dotenv');
+const cors = require('cors');
+const connectDB = require('./db/db');
 
-app.use(cors({ origin: 'http://localhost:5173' }))
-dotenv.config()
+// Import Routes
+const authRouter = require('./routes/auth.routes');
+const workspaceRouter = require('./routes/workspace.routes');
+const ProjectRouter = require('./routes/project.route');
+const teamLeadRoutes = require('./routes/teamLeadRoutes');
+const teamRoutes = require('./routes/team.routes'); 
 
-app.use(express.json())
+dotenv.config();
 
-app.use('/api/auth', authRouter)
-app.use('/api/workspace', workspaceRouter)
-app.use('/api/project', ProjectRouter)
+// Middlewares
+app.use(cors());
+app.use(express.json());
 
-connectDB()
+// Routes
+app.use('/api/auth', authRouter);
+app.use('/api/workspace', workspaceRouter);
+app.use('/api/project', ProjectRouter);
+app.use('/api/team-leads', teamLeadRoutes);
+app.use('/api/teams', teamRoutes);
+
+// Connect to Database
+connectDB();
 
 app.listen(process.env.PORT || 8000, () => {
-    console.log(`Server is running on port ${process.env.PORT || 8000}`)
-})
+    console.log(`Server is running on port ${process.env.PORT || 8000}`);
+});
