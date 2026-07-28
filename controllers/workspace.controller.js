@@ -4,6 +4,12 @@ const CheckRole=require("../middlewares/CheckRoleMiddleware")
 const User=require("../models/user.model")
 const Joi = require("joi");
 const createWorkspace = async (req, res,next) => {
+const {workspaceValidation} = require("./validation/workspaceValidation");
+const User = require("../models/user.model");
+const CheckRole = require("../middlewares/CheckRoleMiddleware")
+
+const createWorkspace = async (req, res, next) => {
+  if (!CheckRole(req, res, ["admin"])) return;
   try {
  
     const { error, value } = workspaceValidation.validate(req.body, {
@@ -50,8 +56,9 @@ const createWorkspace = async (req, res,next) => {
 
 
 const getWorkspaces = async (req, res, next) => {
+  if (!CheckRole(req, res, ["admin"])) return;
   try {
-    const workspaces = await Workspace.find({ ownerId: req.user._id }).populate("ownerId").sort({
+    const workspaces = await Workspace.find({ ownerId: req.user.id }).populate("ownerId").sort({
       createdAt: -1,
     });
 
@@ -64,9 +71,10 @@ const getWorkspaces = async (req, res, next) => {
 
 
 const getWorkspace = async (req, res, next) => {
+  if (!CheckRole(req, res, ["admin"])) return;
   try {
     const targetWorkspace = await Workspace.findOne({
-      _id: req.params.id,
+      _id: req.params.workspaceId,
       ownerId: req.user.id,
     }).populate("ownerId");
 
@@ -87,6 +95,7 @@ const getWorkspace = async (req, res, next) => {
 
 
 const updateWorkspace = async (req, res, next) => {
+  if (!CheckRole(req, res, ["admin"])) return;
   try {
    
     const { error, value } = workspaceValidation.validate(req.body, {
@@ -114,7 +123,7 @@ const updateWorkspace = async (req, res, next) => {
 
     const targetWorkspace = await Workspace.findOneAndUpdate(
       {
-        _id: req.params.id,
+        _id: req.params.workspaceId,
         ownerId: req.user.id,
       },
       value,
@@ -142,10 +151,11 @@ const updateWorkspace = async (req, res, next) => {
 
 
 const deleteWorkspace = async (req, res, next) => {
+  if (!CheckRole(req, res, ["admin"])) return;
   try {
 
     const targetWorkspace = await Workspace.findOneAndDelete({
-      _id: req.params.id,
+      _id: req.params.workspaceId,
       ownerId: req.user.id,
     });
 
@@ -171,4 +181,5 @@ module.exports = {
   getWorkspace,
   updateWorkspace,
   deleteWorkspace,
+}
 };
