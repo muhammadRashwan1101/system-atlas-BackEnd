@@ -21,6 +21,7 @@ app.use('/api/auth', authRouter)
 app.use('/api/workspace', workspaceRouter)
 app.use('/api/project', ProjectRouter)
 app.use('/api/profile', profileRouter)
+app.use('/uploads', express.static('uploads'));
 
 app.use(globalErrorHandler)
 
