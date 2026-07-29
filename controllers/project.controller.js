@@ -3,7 +3,7 @@ const { projectValidation } = require("../controllers/validation/projectValidati
 const Workspace = require("../models/workspace.model")
 const CheckRole = require("../middlewares/CheckRoleMiddleware")
 
-const createProject = async (req, res , next) => {
+const createProject = async (req, res, next) => {
     try {
         if (!CheckRole(req, res, ["admin", "manager"])) return;
 
@@ -11,69 +11,60 @@ const createProject = async (req, res , next) => {
 
         if (!workspaceId) {
             return res.status(400).json({
-                msg: "workspaceId is required in URL"
+                msg: "workspaceId is required in URL",
             });
         }
+
         const { error, value } = projectValidation.validate(req.body, {
             abortEarly: false,
-            stripUnknown: true
+            stripUnknown: true,
         });
 
         if (error) {
             return res.status(400).json({
-                msg: error.details.map(err => err.message)
+                msg: error.details.map((err) => err.message),
             });
         }
 
-
-
         const existingWorkspace = await Workspace.findOne({
-            _id: req.params.workspaceId,
-
-            ownerId: req.user.id
+            _id: workspaceId,
+            ownerId: req.user._id,
         });
 
-        if (!workspace) {
+        if (!existingWorkspace) {
             return res.status(404).json({
-                msg: "Workspace not found or access denied"
+                msg: "Workspace not found or access denied",
             });
         }
 
         const projectExists = await Project.findOne({
             workspaceId,
-            name: value.name
+            name: value.name,
         });
 
         if (projectExists) {
             return res.status(400).json({
-                msg: "Project name already exists in this workspace"
+                msg: "Project name already exists in this workspace",
             });
         }
 
         const project = await Project.create({
             ...value,
-            ownerId: req.user.id,
-
+            ownerId: req.user._id,
             workspaceId,
-            status: "active"
+            status: "active",
         });
-
-      
 
         return res.status(201).json({
             success: true,
             msg: "Project initialized successfully",
-            project
+            project,
         });
-
     } catch (error) {
         next(error);
     }
 };
-
-
-
-const getProjects = async (req, res , next) => {
+const getProjects = async (req, res, next) => {
     try {
         if (!CheckRole(req, res, ["admin", "manager", "techLead"])) return;
 
@@ -116,7 +107,7 @@ const getProjects = async (req, res , next) => {
 };
 
 
-const getProjectById = async (req, res , next) => {
+const getProjectById = async (req, res, next) => {
     try {
         if (!CheckRole(req, res, ["admin", "manager", "techLead"])) return;
         let query = {
@@ -152,13 +143,10 @@ const getProjectById = async (req, res , next) => {
         return res.status(200).json({ project });
     } catch (error) {
 
-       next(error);
-    }
-};
-const updateProject = async (req, res , next) => {
-
         next(error);
     }
+};
+const updateProject = async (req, res, next) => {
 
     try {
 
@@ -193,10 +181,11 @@ const updateProject = async (req, res , next) => {
     } catch (error) {
         next(error);
     }
+};
 
 
 
-const deleteProject = async (req, res , next) => {
+const deleteProject = async (req, res, next) => {
 
     try {
         if (!CheckRole(req, res, ["admin", "manager"])) return;
