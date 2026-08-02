@@ -2,73 +2,87 @@ const Project = require("../models/project.model")
 const { projectValidation } = require("../controllers/validation/projectValidation")
 const Workspace = require("../models/workspace.model")
 const CheckRole = require("../middlewares/CheckRoleMiddleware")
-const createProject = async (req, res) => {
+const createProject = async (req, res , next) => {
     try {
-        if (!CheckRole(req, res, ["admin", "manager", "techLead"])) return;
+        if (!CheckRole(req, res, ["admin", "manager"])) return;
+
+        const { workspaceId } = req.params;
+
+        if (!workspaceId) {
+            return res.status(400).json({
+                msg: "workspaceId is required in URL"
+            });
+        }
+
         const { error, value } = projectValidation.validate(req.body, {
             abortEarly: false,
-            stripUnknown: true,
+            stripUnknown: true
         });
 
         if (error) {
-            return res.status(400).json({ msg: error.details.map((err) => err.message) });
-        }
-        const existingProject = await Project.findOne({
-            workspaceId: req.params.workspaceId,
-            name: value.name,
-        });
-
-        if (existingProject) {
             return res.status(400).json({
-                msg: "Project name already exists"
+                msg: error.details.map(err => err.message)
             });
         }
 
-
-        const existingWorkspace = await Workspace.findOne({
-            _id: req.params.workspaceId,
-            ownerId: req.user._id
+        const workspace = await Workspace.findOne({
+            _id: workspaceId,
+            ownerId: req.user.id
         });
 
-        if (!existingWorkspace) {
+        if (!workspace) {
             return res.status(404).json({
-                msg: "Workspace not found"
+                msg: "Workspace not found or access denied"
             });
         }
 
+        const projectExists = await Project.findOne({
+            workspaceId,
+            name: value.name
+        });
 
-        const newProject = {
+        if (projectExists) {
+            return res.status(400).json({
+                msg: "Project name already exists in this workspace"
+            });
+        }
+
+        const project = await Project.create({
             ...value,
-            ownerId: req.user._id,
-            workspaceId: req.params.workspaceId
-        };
+            ownerId: req.user.id,
+            workspaceId,
+            status: "active"
+        });
 
+        return res.status(201).json({
+            success: true,
+            msg: "Project initialized successfully",
+            project
+        });
 
-        const project = await Project.create(newProject);
-
-        res.status(201).json({ msg: "Project created successfully", project });
     } catch (error) {
-        res.status(500).json({ msg: error.message });
+        next(error);
     }
-}
+};
 
-const getProjects = async (req, res) => {
+
+const getProjects = async (req, res , next) => {
     try {
-     if (!CheckRole(req, res, ["admin", "manager", "techLead"])) return;
+        if (!CheckRole(req, res, ["admin", "manager", "techLead"])) return;
 
         let query = { workspaceId: req.params.workspaceId };
 
         const restrictedRoles = ["user", "techLead"];
 
         if (restrictedRoles.includes(req.user.role)) {
-     
+
             const userTeams = await Team.find({
                 $or: [
                     { members: req.user._id },
                     { teamLead: req.user._id }
                 ]
             }).select("_id");
-            
+
             const teamIds = userTeams.map(team => team._id);
 
             query.$or = [
@@ -93,17 +107,17 @@ const getProjects = async (req, res) => {
     }
 };
 
-const getProjectById = async (req, res) => {
+const getProjectById = async (req, res , next) => {
     try {
-  if (!CheckRole(req, res, ["admin", "manager", "techLead"])) return;
-        let query = { 
-            _id: req.params.projectId, 
-            workspaceId: req.params.workspaceId 
+        if (!CheckRole(req, res, ["admin", "manager", "techLead"])) return;
+        let query = {
+            _id: req.params.projectId,
+            workspaceId: req.params.workspaceId
         };
         const restrictedRoles = ["user", "techLead"];
 
         if (restrictedRoles.includes(req.user.role)) {
-      
+
             const userTeams = await Team.find({
                 $or: [
                     { members: req.user._id },
@@ -113,7 +127,7 @@ const getProjectById = async (req, res) => {
 
             const teamIds = userTeams.map(team => team._id);
 
-          
+
             query.$or = [
                 { ownerId: req.user._id },
                 { ownerTeam: { $in: teamIds } }
@@ -127,10 +141,10 @@ const getProjectById = async (req, res) => {
 
         return res.status(200).json({ project });
     } catch (error) {
-        return res.status(500).json({ msg: error.message });
+       next(error);
     }
 };
-const updateProject = async (req, res) => {
+const updateProject = async (req, res , next) => {
     try {
 
         if (!CheckRole(req, res, ["admin", "manager", "techLead"])) return;
@@ -162,11 +176,11 @@ const updateProject = async (req, res) => {
 
         return res.status(200).json({ msg: "Project updated successfully", project: updatedProject });
     } catch (error) {
-        return res.status(500).json({ msg: error.message });
+        next(error);
     }
 };
 
-const deleteProject = async (req, res) => {
+const deleteProject = async (req, res , next) => {
     try {
         if (!CheckRole(req, res, ["admin", "manager"])) return;
 
@@ -182,7 +196,7 @@ const deleteProject = async (req, res) => {
 
         return res.status(200).json({ msg: "Project deleted successfully" });
     } catch (error) {
-        return res.status(500).json({ msg: error.message });
+        next(error);
     }
 };
 module.exports = { createProject, getProjects, getProjectById, updateProject, deleteProject }
