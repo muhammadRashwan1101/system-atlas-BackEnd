@@ -1,9 +1,8 @@
-const Project = require("../models/project.model");
-const { projectValidation } = require("../controllers/validation/projectValidation");
-const Workspace = require("../models/workspace.model");
-const CheckRole = require("../middlewares/CheckRoleMiddleware");
-
-const createProject = async (req, res) => {
+const Project = require("../models/project.model")
+const { projectValidation } = require("../controllers/validation/projectValidation")
+const Workspace = require("../models/workspace.model")
+const CheckRole = require("../middlewares/CheckRoleMiddleware")
+const createProject = async (req, res , next) => {
     try {
         if (!CheckRole(req, res, ["admin", "manager"])) return;
 
@@ -62,11 +61,7 @@ const createProject = async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
-
-        return res.status(500).json({
-            msg: error.message
-        });
+        next(error);
     }
 };
 
