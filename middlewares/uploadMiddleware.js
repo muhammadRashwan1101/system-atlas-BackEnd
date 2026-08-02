@@ -1,22 +1,32 @@
 const multer = require("multer");
 const path = require("path");
+const crypto = require("crypto");
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, "uploads/avatars");
     },
     filename: function (req, file, cb) {
-        const uniqueName = `${req.user.id}-${Date.now()}${path.extname(file.originalname)}`;
-        cb(null, uniqueName);
+       
+        const tempName = `tmp-${crypto.randomBytes(16).toString("hex")}`;
+        cb(null, tempName);
     },
 });
 
+const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp"];
+const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
 const fileFilter = (req, file, cb) => {
-    const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp"];
     const ext = path.extname(file.originalname).toLowerCase();
-    if (!allowedExtensions.includes(ext)) {
+
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
         return cb(new Error("Invalid file extension"), false);
     }
+
+    if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+        return cb(new Error("Invalid file MIME type"), false);
+    }
+
     cb(null, true);
 };
 
