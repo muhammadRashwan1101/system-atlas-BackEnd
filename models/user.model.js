@@ -3,10 +3,22 @@ const mongoose = require("mongoose");
 const userSchema = new mongoose.Schema(
   {
     // ================= Basic Information =================
-    fullName: {
+    firstName: {
       type: String,
       required: true,
       trim: true,
+    },
+
+    lastName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    fullName: {
+      type: String,
+      trim: true,
+      default: "",
     },
 
     username: {
@@ -24,7 +36,6 @@ const userSchema = new mongoose.Schema(
       unique: true,
       trim: true,
       lowercase: true,
-      index: true,
     },
 
     password: {
@@ -37,6 +48,7 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       enum: [
+        "user",
         "admin",
         "developer",
         "architect",
@@ -44,7 +56,7 @@ const userSchema = new mongoose.Schema(
         "techLead",
         "viewer",
       ],
-      default: "developer",
+      default: "user",
     },
 
     level: {
@@ -55,8 +67,9 @@ const userSchema = new mongoose.Schema(
         "mid",
         "senior",
         "lead",
+        "",
       ],
-      default: "junior",
+      default: "",
     },
 
     department: {
@@ -64,12 +77,24 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
+    parentOrg: {
+      type: String,
+      default: "",
+    },
+
+    // ================= Workspace =================
     workspaceId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Workspace",
       required: true,
     },
 
+    workspaceAccess: {
+      type: [String],
+      default: [],
+    },
+
+    // ================= Teams =================
     teams: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -83,15 +108,11 @@ const userSchema = new mongoose.Schema(
       min: 1,
     },
 
+    // ================= Reporting =================
     reportsTo: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       default: null,
-    },
-
-    parentOrg: {
-      type: String,
-      default: "",
     },
 
     // ================= Profile =================
@@ -163,10 +184,32 @@ const userSchema = new mongoose.Schema(
       ],
       default: "pending",
     },
+
+    // ================= Notifications =================
+    notificationPreferences: {
+      ownershipChanges: { type: Boolean, default: true },
+      projectAssignment: { type: Boolean, default: true },
+      relationshipChanges: { type: Boolean, default: true },
+      criticalAlerts: { type: Boolean, default: true },
+      documentationAlerts: { type: Boolean, default: true },
+    },
   },
   {
     timestamps: true,
   }
 );
+
+// ================= Virtual Full Name =================
+userSchema.virtual("displayName").get(function () {
+  if (this.fullName) {
+    return this.fullName;
+  }
+
+  return `${this.firstName || ""} ${this.lastName || ""}`.trim();
+});
+
+userSchema.set("toJSON", {
+  virtuals: true,
+});
 
 module.exports = mongoose.model("User", userSchema);

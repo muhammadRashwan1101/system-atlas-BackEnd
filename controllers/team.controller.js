@@ -45,7 +45,7 @@ const getTeams = async (req, res) => {
 
     res.status(200).json({ success: true, count: teams.length, data: teams });
   } catch (err) {
-    res.status(500).json({ msg: err.message });
+    res.status(500).json({ msg: err.message, source: "getTeams" });
   }
 };
 

@@ -1,11 +1,12 @@
 const Workspace = require("../models/workspace.model");
-const workspaceValidation= require("./validation/workspaceValidation");
-const CheckRole=require("../middlewares/CheckRoleMiddleware")
-const User=require("../models/user.model")
-const Joi = require("joi");
-const createWorkspace = async (req, res, next) => {
-  try {
+const workspaceValidation = require("./validation/workspaceValidation");
+const CheckRole = require("../middlewares/CheckRoleMiddleware");
+const User = require("../models/user.model");
 
+const createWorkspace = async (req, res, next) => {
+  if (!CheckRole(req, res, ["admin"])) return;
+
+  try {
     const { error, value } = workspaceValidation.validate(req.body, {
       abortEarly: false,
       stripUnknown: true,
@@ -16,7 +17,6 @@ const createWorkspace = async (req, res, next) => {
         msg: error.details.map((err) => err.message),
       });
     }
-
 
     const existingWorkspace = await Workspace.findOne({
       ownerId: req.user.id,
@@ -29,15 +29,12 @@ const createWorkspace = async (req, res, next) => {
       });
     }
 
-
     const workspaceData = {
       ...value,
       ownerId: req.user.id,
     };
 
-
     const newWorkspace = await Workspace.create(workspaceData);
-
 
     // Update Admin User
     await User.findByIdAndUpdate(
@@ -51,37 +48,41 @@ const createWorkspace = async (req, res, next) => {
       }
     );
 
-
     res.status(201).json({
       msg: "Workspace Created Successfully",
       workspace: newWorkspace,
     });
-
-
   } catch (error) {
     next(error);
   }
 };
-
 
 const getWorkspaces = async (req, res, next) => {
+  if (!CheckRole(req, res, ["admin"])) return;
+
   try {
-    const workspaces = await Workspace.find({ ownerId: req.user._id }).populate("ownerId").sort({
-      createdAt: -1,
+    const workspaces = await Workspace.find({
+      ownerId: req.user.id,
+    })
+      .populate("ownerId")
+      .sort({
+        createdAt: -1,
+      });
+
+    res.status(200).json({
+      workspaces,
     });
-
-    res.status(200).json({ workspaces });
-
   } catch (error) {
     next(error);
   }
 };
 
-
 const getWorkspace = async (req, res, next) => {
+  if (!CheckRole(req, res, ["admin"])) return;
+
   try {
     const targetWorkspace = await Workspace.findOne({
-      _id: req.params.id,
+      _id: req.params.workspaceId,
       ownerId: req.user.id,
     }).populate("ownerId");
 
@@ -94,16 +95,15 @@ const getWorkspace = async (req, res, next) => {
     res.status(200).json({
       workspace: targetWorkspace,
     });
-
   } catch (error) {
     next(error);
   }
 };
 
-
 const updateWorkspace = async (req, res, next) => {
+  if (!CheckRole(req, res, ["admin"])) return;
+
   try {
-   
     const { error, value } = workspaceValidation.validate(req.body, {
       abortEarly: false,
       stripUnknown: true,
@@ -118,7 +118,9 @@ const updateWorkspace = async (req, res, next) => {
     const duplicateWorkspace = await Workspace.findOne({
       ownerId: req.user.id,
       name: value.name,
-      _id: { $ne: req.params.id },
+      _id: {
+        $ne: req.params.workspaceId,
+      },
     });
 
     if (duplicateWorkspace) {
@@ -129,7 +131,7 @@ const updateWorkspace = async (req, res, next) => {
 
     const targetWorkspace = await Workspace.findOneAndUpdate(
       {
-        _id: req.params.id,
+        _id: req.params.workspaceId,
         ownerId: req.user.id,
       },
       value,
@@ -149,18 +151,17 @@ const updateWorkspace = async (req, res, next) => {
       msg: "Workspace Updated Successfully",
       workspace: targetWorkspace,
     });
-
   } catch (error) {
     next(error);
   }
 };
 
-
 const deleteWorkspace = async (req, res, next) => {
-  try {
+  if (!CheckRole(req, res, ["admin"])) return;
 
+  try {
     const targetWorkspace = await Workspace.findOneAndDelete({
-      _id: req.params.id,
+      _id: req.params.workspaceId,
       ownerId: req.user.id,
     });
 
@@ -173,12 +174,10 @@ const deleteWorkspace = async (req, res, next) => {
     res.status(200).json({
       msg: "Workspace Deleted Successfully",
     });
-
   } catch (error) {
     next(error);
   }
 };
-
 
 module.exports = {
   createWorkspace,

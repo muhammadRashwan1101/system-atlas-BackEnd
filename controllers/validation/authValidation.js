@@ -3,9 +3,7 @@ const Joi = require("joi");
 const passwordRegex =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&]).{8,}$/;
 
-/* ==========================================
-            Authentication Validation
-========================================== */
+// ================= Login Validation =================
 
 const loginValidation = Joi.object({
   email: Joi.string().email().required().messages({
@@ -17,6 +15,8 @@ const loginValidation = Joi.object({
     "any.required": "Please Enter your Password",
   }),
 });
+
+// ================= Sign Up Validation =================
 
 const signUpValidation = Joi.object({
   firstName: Joi.string().trim().required().messages({
@@ -52,13 +52,19 @@ const signUpValidation = Joi.object({
     }),
 
   role: Joi.string()
-    .valid("user", "admin", "techLead")
+    .valid(
+      "user",
+      "admin",
+      "developer",
+      "architect",
+      "manager",
+      "techLead",
+      "viewer"
+    )
     .default("user"),
 });
 
-/* ==========================================
-            User Management Validation
-========================================== */
+// ================= Create User Validation =================
 
 const createUserValidation = Joi.object({
   firstName: Joi.string().trim().required(),
@@ -72,10 +78,16 @@ const createUserValidation = Joi.object({
   password: Joi.string()
     .min(8)
     .pattern(passwordRegex)
-    .required(),
+    .required()
+    .messages({
+      "string.min": "Password must be at least 8 characters",
+      "string.pattern.base":
+        "Password must contain at least one uppercase letter, one lowercase letter, one number and one special character",
+    }),
 
   role: Joi.string()
     .valid(
+      "user",
       "admin",
       "developer",
       "architect",
@@ -105,13 +117,22 @@ const createUserValidation = Joi.object({
     .length(24)
     .allow(null, ""),
 
-  department: Joi.string().allow("").optional(),
+  department: Joi.string()
+    .allow("")
+    .optional(),
 
-  jobTitle: Joi.string().allow("").optional(),
+  jobTitle: Joi.string()
+    .allow("")
+    .optional(),
 
-  location: Joi.string().allow("").optional(),
+  location: Joi.string()
+    .allow("")
+    .optional(),
 
-  bio: Joi.string().max(500).allow("").optional(),
+  bio: Joi.string()
+    .max(500)
+    .allow("")
+    .optional(),
 
   techStack: Joi.array()
     .items(Joi.string())
@@ -122,9 +143,12 @@ const createUserValidation = Joi.object({
     .length(24)
     .allow(null, ""),
 
-  parentOrg: Joi.string().allow("").optional(),
+  parentOrg: Joi.string()
+    .allow("")
+    .optional(),
 
-  mustResetPassword: Joi.boolean().default(true),
+  mustResetPassword: Joi.boolean()
+    .default(true),
 
   accountStatus: Joi.string()
     .valid(
@@ -135,6 +159,8 @@ const createUserValidation = Joi.object({
     )
     .default("pending"),
 });
+
+// ================= Exports =================
 
 module.exports = {
   loginValidation,

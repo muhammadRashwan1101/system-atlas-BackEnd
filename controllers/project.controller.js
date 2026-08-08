@@ -66,7 +66,7 @@ const createProject = async (req, res , next) => {
 };
 
 
-const getProjects = async (req, res , next) => {
+const getProjects = async (req, res, next) => {
     try {
         if (!CheckRole(req, res, ["admin", "manager", "techLead"])) return;
 
@@ -78,21 +78,21 @@ const getProjects = async (req, res , next) => {
 
             const userTeams = await Team.find({
                 $or: [
-                    { members: req.user._id },
-                    { teamLead: req.user._id }
+                    { members: req.user.id },
+                    { teamLead: req.user.id }
                 ]
             }).select("_id");
 
             const teamIds = userTeams.map(team => team._id);
 
             query.$or = [
-                { ownerId: req.user._id },
+                { ownerId: req.user.id },
                 { ownerTeam: { $in: teamIds } }
             ];
         }
         const allProjects = await Project.find({
             workspaceId: req.params.workspaceId,
-            ownerId: req.user._id
+            ownerId: req.user.id
         }).sort({
             createdAt: -1
         });
@@ -107,7 +107,7 @@ const getProjects = async (req, res , next) => {
     }
 };
 
-const getProjectById = async (req, res , next) => {
+const getProjectById = async (req, res, next) => {
     try {
         if (!CheckRole(req, res, ["admin", "manager", "techLead"])) return;
         let query = {
@@ -120,8 +120,8 @@ const getProjectById = async (req, res , next) => {
 
             const userTeams = await Team.find({
                 $or: [
-                    { members: req.user._id },
-                    { teamLead: req.user._id }
+                    { members: req.user.id },
+                    { teamLead: req.user.id }
                 ]
             }).select("_id");
 
@@ -129,7 +129,7 @@ const getProjectById = async (req, res , next) => {
 
 
             query.$or = [
-                { ownerId: req.user._id },
+                { ownerId: req.user.id },
                 { ownerTeam: { $in: teamIds } }
             ];
         }
@@ -141,13 +141,13 @@ const getProjectById = async (req, res , next) => {
 
         return res.status(200).json({ project });
     } catch (error) {
-       next(error);
+        next(error);
     }
 };
-const updateProject = async (req, res , next) => {
+const updateProject = async (req, res, next) => {
     try {
 
-        if (!CheckRole(req, res, ["admin", "manager", "techLead"])) return;
+        if (!CheckRole(req, res, ["admin", "manager"])) return;
 
 
         const { error, value } = projectValidation.validate(req.body, {
@@ -164,7 +164,7 @@ const updateProject = async (req, res , next) => {
             {
                 _id: req.params.projectId,
                 workspaceId: req.params.workspaceId,
-                ownerId: req.user._id
+                ownerId: req.user.id
             },
             { $set: value },
             { new: true, runValidators: true }
@@ -180,14 +180,14 @@ const updateProject = async (req, res , next) => {
     }
 };
 
-const deleteProject = async (req, res , next) => {
+const deleteProject = async (req, res, next) => {
     try {
         if (!CheckRole(req, res, ["admin", "manager"])) return;
 
         const deletedProject = await Project.findOneAndDelete({
             _id: req.params.projectId,
             workspaceId: req.params.workspaceId,
-            ownerId: req.user._id
+            ownerId: req.user.id
         });
 
         if (!deletedProject) {
