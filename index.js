@@ -11,7 +11,8 @@ const ProjectRouter = require('./routes/project.route');
 const profileRouter = require('./routes/profile.route');
 const teamLeadRoutes = require('./routes/teamLeadRoutes');
 const teamRoutes = require('./routes/team.routes');
-
+const userRoutes = require("./routes/createUserRoute");
+const teamMemberRoutes = require("./routes/teamMember.routes");
 // Middleware
 const globalErrorHandler = require('./middlewares/globalErrorHandler');
 
@@ -30,6 +31,8 @@ app.use('/api/project', ProjectRouter);
 app.use('/api/profile', profileRouter);
 app.use('/api/team-leads', teamLeadRoutes);
 app.use('/api/teams', teamRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api", teamMemberRoutes);
 
 
 app.use(globalErrorHandler);

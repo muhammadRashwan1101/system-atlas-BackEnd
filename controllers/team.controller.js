@@ -1,9 +1,6 @@
 const Team = require("../models/teams.model");
-const { 
-  createTeamSchema, 
-  updateTeamSchema, 
-  validateTeamIdSchema 
-} = require("./validation/team.validation");
+const User = require("../models/user.model");
+const {  createTeamSchema, updateTeamSchema, validateTeamIdSchema } = require("./validation/team.validation");
 
 // 1. Create Team 
 const createTeam = async (req, res) => {
@@ -133,28 +130,51 @@ const updateTeam = async (req, res) => {
 };
 
 // 5. Delete Team 
+
+
 const deleteTeam = async (req, res) => {
   const { error } = validateTeamIdSchema.validate({ id: req.params.id });
+
   if (error) {
-    return res.status(400).json({ msg: error.details[0].message });
+    return res.status(400).json({
+      msg: error.details[0].message,
+    });
   }
 
   try {
-    const deletedTeam = await Team.findByIdAndDelete(req.params.id);
+    const team = await Team.findById(req.params.id);
 
-    if (!deletedTeam) {
-      return res.status(404).json({ msg: "Team not found" });
+    if (!team) {
+      return res.status(404).json({
+        msg: "Team not found",
+      });
     }
+
+    // إزالة التيم من جميع الأعضاء
+    await User.updateMany(
+      {
+        teamId: req.params.id,
+      },
+      {
+        $set: {
+          teamId: null,
+        },
+      }
+    );
+
+    // حذف التيم
+    await Team.findByIdAndDelete(req.params.id);
 
     res.status(200).json({
       success: true,
-      msg: "Team deleted successfully"
+      msg: "Team deleted successfully",
     });
   } catch (err) {
-    res.status(500).json({ msg: err.message });
+    res.status(500).json({
+      msg: err.message,
+    });
   }
 };
-
 module.exports = {
   createTeam,
   getTeams,

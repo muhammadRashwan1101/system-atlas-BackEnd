@@ -3,9 +3,9 @@ const workspaceValidation= require("./validation/workspaceValidation");
 const CheckRole=require("../middlewares/CheckRoleMiddleware")
 const User=require("../models/user.model")
 const Joi = require("joi");
-const createWorkspace = async (req, res,next) => {
+const createWorkspace = async (req, res, next) => {
   try {
- 
+
     const { error, value } = workspaceValidation.validate(req.body, {
       abortEarly: false,
       stripUnknown: true,
@@ -17,6 +17,7 @@ const createWorkspace = async (req, res,next) => {
       });
     }
 
+
     const existingWorkspace = await Workspace.findOne({
       ownerId: req.user.id,
       name: value.name,
@@ -27,22 +28,36 @@ const createWorkspace = async (req, res,next) => {
         msg: "Workspace name already exists",
       });
     }
-    console.log(req.user)
+
+
     const workspaceData = {
       ...value,
       ownerId: req.user.id,
-      
     };
 
-    
+
     const newWorkspace = await Workspace.create(workspaceData);
 
-    //For selective entry ( Dashboard vs New Workspace )
-    await User.findByIdAndUpdate(req.user.id, {
-      onboardingStatus: "completed"
-    })
 
-    res.status(201).json({ msg: "Workspace Created Successfully", workspace: newWorkspace });
+    // Update Admin User
+    await User.findByIdAndUpdate(
+      req.user.id,
+      {
+        workspaceId: newWorkspace._id,
+        onboardingStatus: "completed",
+      },
+      {
+        new: true,
+      }
+    );
+
+
+    res.status(201).json({
+      msg: "Workspace Created Successfully",
+      workspace: newWorkspace,
+    });
+
+
   } catch (error) {
     next(error);
   }

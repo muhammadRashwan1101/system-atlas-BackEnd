@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const User = require("../../models/user.model")
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
-const { loginValidation, signUpValidation } = require("../validation/authValidation")
+const { loginValidation, signUpValidation,  createUserValidation } = require("../validation/authValidation")
 
 
  const register = async (req,res,next) => {
