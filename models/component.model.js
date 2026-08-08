@@ -19,31 +19,46 @@ const componentSchema = new mongoose.Schema({
     type: {
         type: String,
         enum: [
-            "service",
+            "cloud-service",
             "database",
-            "api",
+            "api-gateway",
             "queue",
             "cache",
             "frontend",
-            "third-party"
+            "backend",
+            "third-party",
+            "Data Science"
         ],
         required: true
     },
-    technology: {
+    technologies: {
         type: [String],
-        required: true,
         default: []
+    },
+    ownerRefCode: {
+        type: String,
+        default: null
     },
     ownerTeam: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Team",
-        required: true
+        default: null
     },
+    technicalLead: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: null
+    },
+    maintainers: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: null
+    }],
     tags: {
         type: [String],
         default: []
     },
-    metadata: {
+    documentation: {
         type: mongoose.Schema.Types.Mixed,
         default: {}
     },
@@ -51,6 +66,15 @@ const componentSchema = new mongoose.Schema({
         type: String,
         enum: ["planned", "active", "inactive"],
         default: "active"
+    },
+    deploymentEnvironment:{
+        type:String,
+        enum:[
+            "development",
+            "staging",
+            "production"
+        ],
+        default:"development"
     },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,

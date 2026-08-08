@@ -39,6 +39,7 @@ const projectSchema = new mongoose.Schema({
     ownerTeam: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Team",
+        default: null
        
     },
     managerName: {
