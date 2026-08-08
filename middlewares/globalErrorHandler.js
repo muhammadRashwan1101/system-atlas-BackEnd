@@ -9,10 +9,10 @@ const globalErrorHandler = (err, req, res, next) => {
       stack: err.stack
     });
   }
-
+  console.error(err);
   return res.status(statusCode).json({
     status: status,
-    message: err.message
+    message: "Internal Server Erro"
   });
 };
 
