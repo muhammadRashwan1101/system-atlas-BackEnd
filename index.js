@@ -32,11 +32,11 @@ app.use('/api/profile', profileRouter);
 app.use('/api/team-leads', teamLeadRoutes);
 app.use('/api/wizard', wizardRoutes);
 app.use('/api/teams', teamRoutes);
+app.use('/uploads', express.static('uploads'));
 
-app.use(globalErrorHandler);
+app.use(globalErrorHandler)
 
-
-connectDB();
+connectDB()
 
 app.listen(process.env.PORT || 8000, () => {
     console.log(`Server is running on port ${process.env.PORT || 8000}`);
