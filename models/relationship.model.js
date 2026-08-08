@@ -44,3 +44,5 @@ const relationShipSchema = new mongoose.Schema({
     }
     
 }, {timestamps: true})
+
+module.exports = mongoose.model("Relationship", relationShipSchema)

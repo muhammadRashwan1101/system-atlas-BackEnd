@@ -1,11 +1,11 @@
 const joi = require("joi")
 
-const relatioshipValidation = Joi.object({
-    relationships: Joi.array().items(
-        Joi.object({
-            targetId: Joi.string().hex().length(24).required(),
+const relatioshipValidation = joi.object({
+    relationships: joi.array().items(
+        joi.object({
+            targetId: joi.string().hex().length(24).required(),
 
-            type: Joi.string()
+            type: joi.string()
                 .valid(
                     "calls",
                     "reads-from",
@@ -17,7 +17,7 @@ const relatioshipValidation = Joi.object({
                 )
                 .required(),
 
-            protocol: Joi.string()
+            protocol: joi.string()
                 .valid(
                     "HTTP",
                     "HTTPS",
@@ -26,7 +26,7 @@ const relatioshipValidation = Joi.object({
                     "AMQP",
                     "WebSocket"
                 )
-                .required()
+                .allow(null)
         })
-    )
+    ).default([])
 })

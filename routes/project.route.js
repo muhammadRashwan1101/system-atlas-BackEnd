@@ -1,6 +1,9 @@
 const projectController = require("../controllers/project.controller")
 const authMiddleware = require("../middlewares/authMiddleware")
 const setupWizardController = require("../controllers/setupWizard.controller")
+const architechtureValidator = require("../middlewares/architechtureValidator")
+const componentController = require("../controllers/component.controller");
+
 const router = require("express").Router()
 router.use(authMiddleware);
 
@@ -10,6 +13,9 @@ router.route("/:id")
     .delete(projectController.deleteProject)
 
 router.route("/:projectId/wizard")
-    .post(setupWizardController.newSetupWizard)
+    .post(architechtureValidator, setupWizardController.newSetupWizard)
+
+router.route("/:projectId/components")
+    .get(architechtureValidator, componentController.getComponentsByProjectId)
     
 module.exports = router

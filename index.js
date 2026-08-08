@@ -1,40 +1,43 @@
-const dotenv = require('dotenv')
-dotenv.config()
+const express = require('express');
+const dotenv = require('dotenv');
+const cors = require('cors');
+const morgan = require('morgan');
+const connectDB = require('./db/db');
 
-const express = require('express')
-const app = express()
-const connectDB = require('./db/db')
-const authRouter = require('./routes/auth.routes')
-const workspaceRouter = require("./routes/workspace.routes")
-const ProjectRouter = require("./routes/project.route")
-const TechnologiesRouter = require("./routes/technologies.routes")
-const setupWizardRouter = require("./routes/wizard.routes")
-const globalErrorHandler = require('./middlewares/globalErrorHandler')
+// Routes
+const authRouter = require('./routes/auth.routes');
+const workspaceRouter = require('./routes/workspace.routes');
+const ProjectRouter = require('./routes/project.route');
+const profileRouter = require('./routes/profile.route');
+const teamLeadRoutes = require('./routes/teamLeadRoutes');
+const teamRoutes = require('./routes/team.routes');
+const wizardRoutes = require('./routes/wizard.routes');
+// Middleware
+const globalErrorHandler = require('./middlewares/globalErrorHandler');
 
-const morgan = require('morgan')
-const cors = require('cors')
+dotenv.config();
 
-const profileRouter = require("./routes/profile.route")
+const app = express();
 
-app.use(cors())
+// Middlewares
+app.use(cors());
+app.use(express.json());
+app.use(morgan('dev'));
+
+// Routes
+app.use('/api/auth', authRouter);
+app.use('/api/workspaces', workspaceRouter);
+app.use('/api/projects', ProjectRouter);
+app.use('/api/profile', profileRouter);
+app.use('/api/team-leads', teamLeadRoutes);
+app.use('/api/wizard', wizardRoutes);
+app.use('/api/teams', teamRoutes);
+
+app.use(globalErrorHandler);
 
 
-
-app.use(express.json())
-
-app.use(morgan('dev'))
-
-app.use('/api/auth', authRouter)
-app.use('/api/workspaces', workspaceRouter)
-app.use('/api/projects', ProjectRouter)
-app.use('/api/technologies', TechnologiesRouter)
-app.use("/api/wizard", setupWizardRouter)
-app.use('/api/profile', profileRouter)
-
-app.use(globalErrorHandler)
-
-connectDB()
+connectDB();
 
 app.listen(process.env.PORT || 8000, () => {
-    console.log(`Server is running on port ${process.env.PORT || 8000}`)
-})
+    console.log(`Server is running on port ${process.env.PORT || 8000}`);
+});
