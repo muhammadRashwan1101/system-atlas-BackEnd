@@ -238,7 +238,18 @@ const updateSetupWizard = async (req, res, next) => {
     }
 }
 
+const getWizard = async (req, res, next) => {
+    try {
+        res.status(200).json({
+            wizard: req.currentWizard
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
     newSetupWizard,
-    updateSetupWizard
+    updateSetupWizard,
+    getWizard
 }
