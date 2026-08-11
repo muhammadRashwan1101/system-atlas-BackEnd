@@ -76,8 +76,8 @@ const userSchema = new mongoose.Schema(
     },
     accountStatus: {
       type: String,
-      enum: ["active", "inactive"],
-      default: "active",
+      enum: ["active", "pending", "invited", "suspended", "inactive"],
+      default: "pending",
     },
     notificationPreferences: {
       ownershipChanges: { type: Boolean, default: true },
@@ -85,6 +85,15 @@ const userSchema = new mongoose.Schema(
       relationshipChanges: { type: Boolean, default: true },
       criticalAlerts: { type: Boolean, default: true },
       documentationAlerts: { type: Boolean, default: true },
+    },
+    lastActive: {
+      type: Date,
+      default: Date.now,
+    },
+    team: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Team",
+      default: null,
     },
   },
   { timestamps: true },
