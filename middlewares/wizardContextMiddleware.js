@@ -8,6 +8,11 @@ const wizardContextMiddleware = async (req, res, next) => {
     if (!currentWizard) {
         return res.status(404).json({ msg: "Invalid Request, Wizard not found" })
     }
+    if (currentWizard.projectId.toString() !== req.params.projectId ) {
+        return res.status(400).json({
+            msg: "Wizard does not belong to this project"
+        });
+    }
        //Check for dupliucate projects
            const existingProject = await Project.findById(currentWizard.projectId)
            if(!existingProject) {
