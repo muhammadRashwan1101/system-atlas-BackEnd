@@ -11,6 +11,7 @@ const {ownerShipValidation} = require("../controllers/validation/setupWizard/own
 const {techStackValidation} = require("../controllers/validation/setupWizard/techStackValidation")
 const {documentationValidation} = require("../controllers/validation/setupWizard/documentationValidation")
 const {relationshipValidation} = require("../controllers/validation/relationshipValidation")
+const {validateBatchRelationships} = require("../services/relationship.service")
 const CheckRoleMiddleware = require("../middlewares/CheckRoleMiddleware")
 
 const newSetupWizard = async (req, res, next) => {
@@ -185,28 +186,16 @@ const updateSetupWizard = async (req, res, next) => {
                     if(error) {
                         return res.status(400).json({ msg: error.details.map(err => err.message) })
                     }
-                    //Check for duplicate relationships
-                    const relationshipSet = new Set()
-                        value.relationships.forEach(relationship => {
-                            relationshipSet.add(`${relationship.targetId}-${relationship.type}-${relationship.protocol}`)
-                        })
-                    if(relationshipSet.size !== value.relationships.length) {
-                        return res.status(400).json({ msg: "Duplicate relationships detected." })
-                    }
-                    //Check for self relationship
-                    const selfRelationship = value.relationships.find(relationship => relationship.sourceId === relationship.targetId)
-                    if(selfRelationship) {
-                        return res.status(400).json({ msg: "Self relationship detected." })
-                    }
-                    //Check if the related component exists
-                    const relatedComponents = await Component.find({ _id: { $in: value.relationships.map(relationship => relationship.targetId) } })
-                    if(relatedComponents.length !== value.relationships.length) {
-                        return res.status(400).json({ msg: "One or more related components not found." })
-                    }
-                    //Check if the related component is in the same project
-                    const relatedComponentsInProject = relatedComponents.filter(component => component.projectId.toString() === currentWizard.projectId.toString())
-                    if (relatedComponentsInProject.length !== value.relationships.length) {
-                        return res.status(400).json({ msg: "One or more related components are not in the same project." })
+
+                    try {
+                        await validateBatchRelationships({
+                            projectId: currentWizard.projectId,
+                            relationships: value.relationships
+                        });
+                    } catch (validationErr) {
+                        return res.status(validationErr.statusCode || 400).json({
+                            msg: validationErr.message
+                        });
                     }
 
                     currentWizard.data = {
@@ -238,7 +227,18 @@ const updateSetupWizard = async (req, res, next) => {
     }
 }
 
+const getWizard = async (req, res, next) => {
+    try {
+        res.status(200).json({
+            wizard: req.currentWizard
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
     newSetupWizard,
-    updateSetupWizard
+    updateSetupWizard,
+    getWizard
 }

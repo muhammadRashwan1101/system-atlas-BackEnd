@@ -13,7 +13,6 @@ const architechtureValidator = async (req, res, next) => {
         if (!existingWorkspace) {
             return res.status(404).json({ msg: "Workspace not found" })
         }
-        console.log(existingProject.ownerId, existingWorkspace.ownerId)
         
         req.projectId = existingProject._id.toString()
         req.workspaceId = existingProject.workspaceId.toString()
