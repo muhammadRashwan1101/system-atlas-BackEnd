@@ -26,7 +26,14 @@ const signUpValidation = Joi.object({
   lastName: Joi.string().trim().required().messages({
     "any.required": "Please Enter your Last Name",
   }),
-
+  username: Joi.string()
+    .trim()
+    .lowercase()
+    .required()
+    .messages({
+      "any.required": "Please Enter your Username",
+      "string.empty": "Please Enter your Username",
+    }),
   email: Joi.string().email().required().messages({
     "string.email": "Please Enter a Valid Email",
     "any.required": "Please Enter your Email",

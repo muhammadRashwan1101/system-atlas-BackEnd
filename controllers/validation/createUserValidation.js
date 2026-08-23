@@ -4,38 +4,32 @@ const passwordRegex =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&]).{8,}$/;
 
 const createUserValidation = Joi.object({
+  // ================= Basic Information =================
+
   fullName: Joi.string()
     .trim()
     .min(3)
     .required()
     .messages({
       "string.empty": "Full Name is required",
+      "any.required": "Full Name is required",
     }),
 
   username: Joi.string()
     .trim()
     .min(3)
-    .required()
-    .messages({
-      "string.empty": "Username is required",
-    }),
+    .required(),
 
   email: Joi.string()
     .email()
-    .required()
-    .messages({
-      "string.email": "Please Enter a Valid Email",
-      "string.empty": "Email is required",
-    }),
+    .required(),
 
   password: Joi.string()
     .min(8)
     .pattern(passwordRegex)
-    .required()
-    .messages({
-      "string.pattern.base":
-        "Password must contain uppercase, lowercase, number and special character.",
-    }),
+    .required(),
+
+  // ================= Organization =================
 
   role: Joi.string()
     .valid(
@@ -49,31 +43,18 @@ const createUserValidation = Joi.object({
     .required(),
 
   level: Joi.string()
-  .valid(
-    "intern",
-    "junior",
-    "mid",
-    "senior",
-    "lead"
-  )
-  .required(),
+    .valid(
+      "intern",
+      "junior",
+      "mid",
+      "senior",
+      "lead"
+    )
+    .required(),
 
-teams: Joi.array()
-  .items(
-    Joi.string()
-      .hex()
-      .length(24)
-  )
-  .default([]),
-
-maxTeams: Joi.number()
-  .integer()
-  .min(1)
-  .default(3),
-
-department: Joi.string()
-  .allow("")
-  .optional(),
+  department: Joi.string()
+    .allow("")
+    .optional(),
 
   jobTitle: Joi.string()
     .allow("")
@@ -92,17 +73,45 @@ department: Joi.string()
     .items(Joi.string())
     .default([]),
 
+  parentOrg: Joi.string()
+    .allow("")
+    .optional(),
+
+  // ================= Workspace =================
+
+  workspaceId: Joi.string()
+    .hex()
+    .length(24)
+    .required(),
+
+  // ================= Teams =================
+
+  teams: Joi.array()
+    .items(
+      Joi.string()
+        .hex()
+        .length(24)
+    )
+    .default([]),
+
+  maxTeams: Joi.number()
+    .integer()
+    .min(1)
+    .default(3),
+
+  // ================= Reporting =================
+
   reportsTo: Joi.string()
     .hex()
     .length(24)
     .allow("", null),
 
-  parentOrg: Joi.string()
-    .allow("")
-    .optional(),
+  // ================= Security =================
 
   mustResetPassword: Joi.boolean()
     .default(true),
+
+  // ================= Account =================
 
   accountStatus: Joi.string()
     .valid(

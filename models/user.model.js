@@ -5,14 +5,14 @@ const userSchema = new mongoose.Schema(
     // ================= Basic Information =================
     firstName: {
       type: String,
-      required: true,
       trim: true,
+      default: "",
     },
 
     lastName: {
       type: String,
-      required: true,
       trim: true,
+      default: "",
     },
 
     fullName: {
@@ -20,6 +20,7 @@ const userSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+
 
     username: {
       type: String,
@@ -86,7 +87,7 @@ const userSchema = new mongoose.Schema(
     workspaceId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Workspace",
-      required: true,
+      default: null,
     },
 
     workspaceAccess: {

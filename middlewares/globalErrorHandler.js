@@ -1,18 +1,23 @@
 const globalErrorHandler = (err, req, res, next) => {
-  const statusCode = err.statusCode || 500;
-  const status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
+  const statusCode = err.statusCode || err.status || 500;
+
+  const status = `${statusCode}`.startsWith("4")
+    ? "fail"
+    : "error";
+
+  console.error(err);
 
   if (process.env.NODE_ENV === "dev") {
     return res.status(statusCode).json({
-      status: status,
+      status,
       message: err.message,
-      stack: err.stack
+      stack: err.stack,
     });
   }
-  console.error(err);
+
   return res.status(statusCode).json({
-    status: status,
-    message: "Internal Server Erro"
+    status,
+    message: err.message || "Internal Server Error",
   });
 };
 

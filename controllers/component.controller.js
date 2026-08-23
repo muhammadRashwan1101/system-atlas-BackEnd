@@ -1,5 +1,6 @@
 const Component = require("../models/component.model");
 const Relationship = require("../models/relationship.model");
+const { calculateDocumentationCoverage} = require("./utils/documentationCoverage");
 const {componentValidation} = require("./validation/componentValidation.js")
  
 const createComponent = async (req, res, next) => {
@@ -17,6 +18,7 @@ const createComponent = async (req, res, next) => {
             ownerTeam,
             technicalLead: Data.ownership.technicalLead,
             maintainers: Data.ownership.maintainers,
+            documentation: Data.documentation || {},
             deploymentEnvironment: Data.ownership.environment,
             createdBy: req.user.id
         }
@@ -57,15 +59,32 @@ const createComponent = async (req, res, next) => {
 
 const getComponentsByProjectId = async (req, res, next) => {
     try {
-        const components = await Component.find({ projectId: req.projectId })
-        if(!components || components.length === 0) {
-            return res.status(404).json({ msg: "No components found for this project" })
+        const components = await Component.find({
+            projectId: req.projectId
+        });
+
+        if (!components || components.length === 0) {
+            return res.status(404).json({
+                msg: "No components found for this project"
+            });
         }
-        res.status(200).json({ components })
+
+        const componentsWithCoverage = components.map(component => ({
+            ...component.toObject(),
+            documentationCoverage:
+                calculateDocumentationCoverage(
+                    component.documentation
+                )
+        }));
+
+        res.status(200).json({
+            components: componentsWithCoverage
+        });
+
     } catch (error) {
-        next(error)
+        next(error);
     }
-}
+};
 
 module.exports = {
     createComponent,

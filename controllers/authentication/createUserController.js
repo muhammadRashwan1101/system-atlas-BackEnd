@@ -100,12 +100,18 @@ const getUsers = async (req, res, next) => {
 
     const filter = {
       workspaceId: admin.workspaceId,
+
+      // Don't show admins in Add Members
+      role: {
+        $ne: "admin",
+      },
+
       accountStatus: {
         $ne: "inactive",
       },
     };
 
-    // يستخدم فى Add Members
+    // Used by Add Members
     if (req.query.available === "true") {
       filter.$expr = {
         $lt: [
