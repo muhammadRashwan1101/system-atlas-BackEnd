@@ -14,7 +14,8 @@ const createProject = async (req, res, next) => {
     try {
         if (!CheckRole(req, res, ["admin", "manager"])) return;
 
-        const workspaceId = req.params.workspaceId || req.body.workspaceId;
+        const workspaceId =
+            req.params.workspaceId || req.body.workspaceId;
 
         if (!workspaceId) {
             return res.status(400).json({
@@ -22,10 +23,13 @@ const createProject = async (req, res, next) => {
             });
         }
 
-        const { error, value } = projectValidation.validate(req.body, {
-            abortEarly: false,
-            stripUnknown: true,
-        });
+        const { error, value } = projectValidation.validate(
+            req.body,
+            {
+                abortEarly: false,
+                stripUnknown: true,
+            }
+        );
 
         if (error) {
             return res.status(400).json({
@@ -51,7 +55,8 @@ const createProject = async (req, res, next) => {
             });
         }
 
-        // Prevent duplicate project names inside the same workspace
+        // Prevent duplicate project names
+        // inside the same workspace
         const projectExists = await Project.findOne({
             workspaceId,
             name: value.name,
@@ -86,7 +91,9 @@ const createProject = async (req, res, next) => {
 
 const getProjects = async (req, res, next) => {
     try {
-        if (!CheckRole(req, res, ["admin", "manager", "techLead"])) return;
+        if (!CheckRole(req, res, ["admin", "manager", "techLead"])) {
+            return;
+        }
 
         const {
             search,
@@ -101,9 +108,9 @@ const getProjects = async (req, res, next) => {
 
         let query = {};
 
-        // -------------------------------------------------
-        // Workspace filter
-        // -------------------------------------------------
+        // =================================================
+        // Workspace Filter
+        // =================================================
 
         const targetWorkspace =
             req.params.workspaceId || workspaceId;
@@ -116,9 +123,9 @@ const getProjects = async (req, res, next) => {
             query.workspaceId = targetWorkspace;
         }
 
-        // -------------------------------------------------
+        // =================================================
         // RBAC
-        // -------------------------------------------------
+        // =================================================
 
         if (req.user.role !== "admin") {
             if (req.user.role === "manager") {
@@ -135,7 +142,9 @@ const getProjects = async (req, res, next) => {
                     ],
                 }).select("_id");
 
-                const teamIds = userTeams.map((team) => team._id);
+                const teamIds = userTeams.map(
+                    (team) => team._id
+                );
 
                 query.$or = [
                     { ownerId: req.user.id },
@@ -144,9 +153,9 @@ const getProjects = async (req, res, next) => {
             }
         }
 
-        // -------------------------------------------------
-        // Status filter
-        // -------------------------------------------------
+        // =================================================
+        // Status Filter
+        // =================================================
 
         if (
             status &&
@@ -158,9 +167,9 @@ const getProjects = async (req, res, next) => {
             };
         }
 
-        // -------------------------------------------------
-        // Environment filter
-        // -------------------------------------------------
+        // =================================================
+        // Environment Filter
+        // =================================================
 
         const selectedEnv = targetEnvironment || env;
 
@@ -174,9 +183,9 @@ const getProjects = async (req, res, next) => {
             };
         }
 
-        // -------------------------------------------------
-        // System topology
-        // -------------------------------------------------
+        // =================================================
+        // System Topology Filter
+        // =================================================
 
         if (
             systemTopology &&
@@ -186,9 +195,9 @@ const getProjects = async (req, res, next) => {
             query.systemTopology = systemTopology;
         }
 
-        // -------------------------------------------------
-        // Manager filter
-        // -------------------------------------------------
+        // =================================================
+        // Manager Filter
+        // =================================================
 
         if (
             manager &&
@@ -202,9 +211,9 @@ const getProjects = async (req, res, next) => {
             };
         }
 
-        // -------------------------------------------------
-        // Tech Lead filter
-        // -------------------------------------------------
+        // =================================================
+        // Tech Lead Filter
+        // =================================================
 
         if (
             techLead &&
@@ -218,9 +227,9 @@ const getProjects = async (req, res, next) => {
             };
         }
 
-        // -------------------------------------------------
+        // =================================================
         // Search
-        // -------------------------------------------------
+        // =================================================
 
         if (search && search.trim() !== "") {
             query.$and = query.$and || [];
@@ -249,9 +258,9 @@ const getProjects = async (req, res, next) => {
             });
         }
 
-        // -------------------------------------------------
-        // Fetch projects
-        // -------------------------------------------------
+        // =================================================
+        // Fetch Projects
+        // =================================================
 
         const projects = await Project.find(query)
             .populate("workspaceId", "name")
@@ -284,26 +293,19 @@ const getProjectById = async (req, res, next) => {
             _id: projectId,
         };
 
-        // -------------------------------------------------
         // Workspace restriction
-        // -------------------------------------------------
-
         if (req.params.workspaceId) {
             query.workspaceId = req.params.workspaceId;
         }
 
-        // -------------------------------------------------
+        // =================================================
         // RBAC
-        // -------------------------------------------------
+        // =================================================
 
         if (req.user.role !== "admin") {
             if (req.user.role === "manager") {
-                // Manager can access owned projects
                 query.ownerId = req.user.id;
             } else {
-                // Tech lead can access owned projects
-                // or projects belonging to their teams
-
                 const userTeams = await Team.find({
                     $or: [
                         { members: req.user.id },
@@ -355,9 +357,9 @@ const updateProject = async (req, res, next) => {
         const projectId =
             req.params.id || req.params.projectId;
 
-        // -------------------------------------------------
-        // Validate request body
-        // -------------------------------------------------
+        // =================================================
+        // Validate Body
+        // =================================================
 
         const { error, value } = projectValidation.validate(
             req.body,
@@ -375,9 +377,9 @@ const updateProject = async (req, res, next) => {
             });
         }
 
-        // -------------------------------------------------
-        // Build query
-        // -------------------------------------------------
+        // =================================================
+        // Build Query
+        // =================================================
 
         let query = {
             _id: projectId,
@@ -393,9 +395,58 @@ const updateProject = async (req, res, next) => {
             query.ownerId = req.user.id;
         }
 
-        // -------------------------------------------------
-        // Update project
-        // -------------------------------------------------
+        // =================================================
+        // Check Workspace Access
+        // =================================================
+
+        if (req.params.workspaceId) {
+            const workspaceQuery =
+                req.user.role === "admin"
+                    ? { _id: req.params.workspaceId }
+                    : {
+                          _id: req.params.workspaceId,
+                          ownerId: req.user.id,
+                      };
+
+            const workspace = await Workspace.findOne(
+                workspaceQuery
+            );
+
+            if (!workspace) {
+                return res.status(404).json({
+                    msg: "Workspace not found or access denied",
+                });
+            }
+        }
+
+        // =================================================
+        // Prevent Duplicate Project Names
+        // =================================================
+
+        if (value.name) {
+            const duplicateQuery = {
+                workspaceId:
+                    req.params.workspaceId ||
+                    value.workspaceId,
+                name: value.name,
+                _id: { $ne: projectId },
+            };
+
+            if (duplicateQuery.workspaceId) {
+                const projectExists =
+                    await Project.findOne(duplicateQuery);
+
+                if (projectExists) {
+                    return res.status(400).json({
+                        msg: "Project name already exists in this workspace",
+                    });
+                }
+            }
+        }
+
+        // =================================================
+        // Update
+        // =================================================
 
         const updatedProject =
             await Project.findOneAndUpdate(
@@ -442,12 +493,12 @@ const deleteProject = async (req, res, next) => {
             _id: projectId,
         };
 
-        // Restrict manager to projects they own
+        // Manager can delete only owned projects
         if (req.user.role !== "admin") {
             query.ownerId = req.user.id;
         }
 
-        // Workspace restriction if provided
+        // Workspace restriction
         if (req.params.workspaceId) {
             query.workspaceId = req.params.workspaceId;
         }
