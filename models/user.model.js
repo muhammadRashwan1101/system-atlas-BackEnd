@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+﻿const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
   {
@@ -31,6 +31,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["pending", "completed"],
       default: "pending",
+    },
+    mustChangePassword: {
+      type: Boolean,
+      default: false,
     },
     avatar: {
       type: String,
