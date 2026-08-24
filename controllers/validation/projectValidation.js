@@ -78,6 +78,14 @@ const projectValidation = Joi.object({
             "string.empty": "Manager name is required",
             "any.required": "Manager name is required",
         }),
+
+status: Joi.string()
+    .valid("ACTIVE", "CRITICAL", "SUSPENDED", "INACTIVE", "DEVELOPMENT")
+    .optional()
+    .default("ACTIVE")
+    .messages({
+        "any.only": "Status must be ACTIVE, CRITICAL, SUSPENDED, INACTIVE, or DEVELOPMENT",
+    })
 });
 
 module.exports = {projectValidation };
