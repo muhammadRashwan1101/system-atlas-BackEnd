@@ -1,12 +1,11 @@
-const Workspace = require("../models/workspace.model");
-const workspaceValidation= require("./validation/workspaceValidation");
-const CheckRole=require("../middlewares/CheckRoleMiddleware")
-const User=require("../models/user.model")
-const Joi = require("joi");
-const createWorkspace = async (req, res,next) => {
+﻿const Workspace = require("../models/workspace.model");
+const workspaceValidation = require("./validation/workspaceValidation");
+const CheckRole = require("../middlewares/CheckRoleMiddleware");
+const User = require("../models/user.model");
+
+const createWorkspace = async (req, res, next) => {
   if (!CheckRole(req, res, ["admin"])) return;
   try {
- 
     const { error, value } = workspaceValidation.validate(req.body, {
       abortEarly: false,
       stripUnknown: true,
@@ -28,20 +27,17 @@ const createWorkspace = async (req, res,next) => {
         msg: "Workspace name already exists",
       });
     }
-    console.log(req.user)
+
     const workspaceData = {
       ...value,
       ownerId: req.user.id,
-      
     };
 
-    
     const newWorkspace = await Workspace.create(workspaceData);
 
-    //For selective entry ( Dashboard vs New Workspace )
     await User.findByIdAndUpdate(req.user.id, {
-      onboardingStatus: "completed"
-    })
+      onboardingStatus: "completed",
+    });
 
     res.status(201).json({ msg: "Workspace Created Successfully", workspace: newWorkspace });
   } catch (error) {
@@ -49,29 +45,36 @@ const createWorkspace = async (req, res,next) => {
   }
 };
 
-
 const getWorkspaces = async (req, res, next) => {
-  if (!CheckRole(req, res, ["admin"])) return;
   try {
-    const workspaces = await Workspace.find({ ownerId: req.user.id }).populate("ownerId").sort({
+    const currentUserDoc = await User.findById(req.user.id);
+    const userWorkspaceAccess = currentUserDoc?.workspaceAccess || [];
+
+    let query = {};
+    if (req.user.role === "admin") {
+      query = { ownerId: req.user.id };
+    } else {
+      query = {
+        $or: [
+          { ownerId: req.user.id },
+          { _id: { $in: userWorkspaceAccess } },
+        ],
+      };
+    }
+
+    const workspaces = await Workspace.find(query).populate("ownerId").sort({
       createdAt: -1,
     });
 
     res.status(200).json({ workspaces });
-
   } catch (error) {
     next(error);
   }
 };
 
-
 const getWorkspace = async (req, res, next) => {
-  if (!CheckRole(req, res, ["admin"])) return;
   try {
-    const targetWorkspace = await Workspace.findOne({
-      _id: req.params.workspaceId,
-      ownerId: req.user.id,
-    }).populate("ownerId");
+    const targetWorkspace = await Workspace.findById(req.params.workspaceId).populate("ownerId");
 
     if (!targetWorkspace) {
       return res.status(404).json({
@@ -79,20 +82,28 @@ const getWorkspace = async (req, res, next) => {
       });
     }
 
+    const currentUserDoc = await User.findById(req.user.id);
+    const userWorkspaceAccess = currentUserDoc?.workspaceAccess || [];
+    const isOwner = targetWorkspace.ownerId?._id?.toString() === req.user.id || targetWorkspace.ownerId?.toString() === req.user.id;
+    const hasAccess = req.user.role === "admin" || isOwner || userWorkspaceAccess.map(String).includes(String(req.params.workspaceId));
+
+    if (!hasAccess) {
+      return res.status(403).json({
+        msg: "Forbidden: You do not have permission to access this workspace",
+      });
+    }
+
     res.status(200).json({
       workspace: targetWorkspace,
     });
-
   } catch (error) {
     next(error);
   }
 };
 
-
 const updateWorkspace = async (req, res, next) => {
   if (!CheckRole(req, res, ["admin"])) return;
   try {
-   
     const { error, value } = workspaceValidation.validate(req.body, {
       abortEarly: false,
       stripUnknown: true,
@@ -107,7 +118,7 @@ const updateWorkspace = async (req, res, next) => {
     const duplicateWorkspace = await Workspace.findOne({
       ownerId: req.user.id,
       name: value.name,
-      _id: { $ne: req.params.id },
+      _id: { $ne: req.params.workspaceId },
     });
 
     if (duplicateWorkspace) {
@@ -138,17 +149,14 @@ const updateWorkspace = async (req, res, next) => {
       msg: "Workspace Updated Successfully",
       workspace: targetWorkspace,
     });
-
   } catch (error) {
     next(error);
   }
 };
 
-
 const deleteWorkspace = async (req, res, next) => {
   if (!CheckRole(req, res, ["admin"])) return;
   try {
-
     const targetWorkspace = await Workspace.findOneAndDelete({
       _id: req.params.workspaceId,
       ownerId: req.user.id,
@@ -163,12 +171,10 @@ const deleteWorkspace = async (req, res, next) => {
     res.status(200).json({
       msg: "Workspace Deleted Successfully",
     });
-
   } catch (error) {
     next(error);
   }
 };
-
 
 module.exports = {
   createWorkspace,

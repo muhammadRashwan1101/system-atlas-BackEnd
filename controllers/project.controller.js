@@ -1,8 +1,10 @@
-const Project = require("../models/project.model")
-const { projectValidation } = require("../controllers/validation/projectValidation")
-const Workspace = require("../models/workspace.model")
-const CheckRole = require("../middlewares/CheckRoleMiddleware")
-const createProject = async (req, res , next) => {
+﻿const Project = require("../models/project.model");
+const { projectValidation } = require("../controllers/validation/projectValidation");
+const Workspace = require("../models/workspace.model");
+const Team = require("../models/teams.model");
+const CheckRole = require("../middlewares/CheckRoleMiddleware");
+
+const createProject = async (req, res, next) => {
     try {
         if (!CheckRole(req, res, ["admin", "manager"])) return;
 
@@ -21,14 +23,11 @@ const createProject = async (req, res , next) => {
 
         if (error) {
             return res.status(400).json({
-                msg: error.details.map(err => err.message)
+                msg: error.details.map((err) => err.message)
             });
         }
 
-        const workspace = await Workspace.findOne({
-            _id: workspaceId,
-            ownerId: req.user.id
-        });
+        const workspace = await Workspace.findById(workspaceId);
 
         if (!workspace) {
             return res.status(404).json({
@@ -59,49 +58,39 @@ const createProject = async (req, res , next) => {
             msg: "Project initialized successfully",
             project
         });
-
     } catch (error) {
         next(error);
     }
 };
 
-
 const getProjects = async (req, res, next) => {
     try {
-        if (!CheckRole(req, res, ["admin", "manager", "techLead"])) return;
+        if (!CheckRole(req, res, ["admin", "manager", "techLead", "user"])) return;
 
         let query = { workspaceId: req.params.workspaceId };
 
         const restrictedRoles = ["user", "techLead"];
 
         if (restrictedRoles.includes(req.user.role)) {
-
             const userTeams = await Team.find({
-                $or: [
-                    { members: req.user.id },
-                    { teamLead: req.user.id }
-                ]
+                $or: [{ members: req.user.id }, { teamLead: req.user.id }]
             }).select("_id");
 
-            const teamIds = userTeams.map(team => team._id);
+            const teamIds = userTeams.map((team) => team._id);
 
             query.$or = [
                 { ownerId: req.user.id },
                 { ownerTeam: { $in: teamIds } }
             ];
         }
-        const allProjects = await Project.find({
-            workspaceId: req.params.workspaceId,
-            ownerId: req.user.id
-        }).sort({
+
+        const allProjects = await Project.find(query).sort({
             createdAt: -1
         });
-
 
         res.status(200).json({
             projects: allProjects
         });
-
     } catch (error) {
         next(error);
     }
@@ -109,30 +98,28 @@ const getProjects = async (req, res, next) => {
 
 const getProjectById = async (req, res, next) => {
     try {
-        if (!CheckRole(req, res, ["admin", "manager", "techLead"])) return;
+        if (!CheckRole(req, res, ["admin", "manager", "techLead", "user"])) return;
+
         let query = {
             _id: req.params.projectId,
             workspaceId: req.params.workspaceId
         };
+
         const restrictedRoles = ["user", "techLead"];
 
         if (restrictedRoles.includes(req.user.role)) {
-
             const userTeams = await Team.find({
-                $or: [
-                    { members: req.user.id },
-                    { teamLead: req.user.id }
-                ]
+                $or: [{ members: req.user.id }, { teamLead: req.user.id }]
             }).select("_id");
 
-            const teamIds = userTeams.map(team => team._id);
-
+            const teamIds = userTeams.map((team) => team._id);
 
             query.$or = [
                 { ownerId: req.user.id },
                 { ownerTeam: { $in: teamIds } }
             ];
         }
+
         const project = await Project.findOne(query);
 
         if (!project) {
@@ -144,27 +131,24 @@ const getProjectById = async (req, res, next) => {
         next(error);
     }
 };
+
 const updateProject = async (req, res, next) => {
     try {
-
         if (!CheckRole(req, res, ["admin", "manager"])) return;
-
 
         const { error, value } = projectValidation.validate(req.body, {
             abortEarly: false,
-            stripUnknown: true,
+            stripUnknown: true
         });
 
         if (error) {
             return res.status(400).json({ msg: error.details.map((err) => err.message) });
         }
 
-
         const updatedProject = await Project.findOneAndUpdate(
             {
                 _id: req.params.projectId,
-                workspaceId: req.params.workspaceId,
-                ownerId: req.user.id
+                workspaceId: req.params.workspaceId
             },
             { $set: value },
             { new: true, runValidators: true }
@@ -186,8 +170,7 @@ const deleteProject = async (req, res, next) => {
 
         const deletedProject = await Project.findOneAndDelete({
             _id: req.params.projectId,
-            workspaceId: req.params.workspaceId,
-            ownerId: req.user.id
+            workspaceId: req.params.workspaceId
         });
 
         if (!deletedProject) {
@@ -199,4 +182,5 @@ const deleteProject = async (req, res, next) => {
         next(error);
     }
 };
-module.exports = { createProject, getProjects, getProjectById, updateProject, deleteProject }
+
+module.exports = { createProject, getProjects, getProjectById, updateProject, deleteProject };
