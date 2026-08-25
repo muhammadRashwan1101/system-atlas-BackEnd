@@ -3,77 +3,102 @@ const User = require("../../models/user.model")
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
 const { loginValidation, signUpValidation } = require("../validation/authValidation")
+const generateEmployeeId = require("../utils/generateEmployeeId");
 
+const register = async (req, res, next) => {
+  const { error, value } = signUpValidation.validate(req.body, {
+    abortEarly: false,
+    stripUnknown: true,
+  });
 
- const register = async (req,res,next) => {
+  if (error) {
+    return res.status(400).json({
+      msg: error.details.map((err) => err.message),
+    });
+  }
 
-    const {error, value } = signUpValidation.validate(req.body, {
-        abortEarly: false,
-        stripUnknown: true
-    }) 
+  try {
+    // Check if email already exists
+    const existingUser = await User.findOne({
+      email: value.email,
+    });
 
-    if(error) {
-        console.log(error.details.map(err => err.message))
-        return res.status(400).json({ msg: error.details.map(err => err.message) })
+    if (existingUser) {
+      return res.status(400).json({
+        msg: "User already exists",
+      });
     }
 
-    try {
-        const existingUser = await User.findOne({email: value.email})
-        
-        if(existingUser) {
-            return res.status(400).json({ msg: "User Already Exists" })
-        }
+    // Hash password
+    value.password = await bcrypt.hash(value.password, 12);
 
-        const hashedPass = await bcrypt.hash(value.password, 12)
-        value.password = hashedPass
+    // Generate Employee ID
+    const employeeId = await generateEmployeeId();
 
-        const newUser = await User.create(value)            
-        res.status(201).json({ msg: "User Created Successfully" , user: {
+    // Create user
+    const newUser = await User.create({
+      ...value,
+      employeeId,
+    });
+
+    return res.status(201).json({
+      success: true,
+      msg: "User created successfully",
+      user: {
         id: newUser._id,
+        employeeId: newUser.employeeId,
         firstName: newUser.firstName,
         lastName: newUser.lastName,
-        email: newUser.email
-    }})
-    } catch (error) {
-        next(error)
+        email: newUser.email,
+      },
+    });
+  } catch (error) {
+    // Duplicate employeeId
+    if (error.code === 11000 && error.keyPattern?.employeeId) {
+      return res.status(400).json({
+        msg: "Employee ID already exists. Please try again.",
+      });
     }
- }
 
- const login = async (req, res ,next) => {
-    const {error, value } = loginValidation.validate(req.body, {
+    next(error);
+  }
+};
+
+const login = async (req, res, next) => {
+    const { error, value } = loginValidation.validate(req.body, {
         abortEarly: false,
         stripUnknown: true
     })
 
-    if(error) {
+    if (error) {
         return res.status(400).json({ msg: error.details.map(err => err.message) })
     }
 
     try {
-        const { email, password } =  value
+        const { email, password } = value
         value.email = email.toLowerCase()
-        
-        const user = await User.findOne({email}).select("+password")
-        if(!user) {
+
+        const user = await User.findOne({ email }).select("+password")
+        if (!user) {
             return res.status(401).json({ msg: "Wrong Email or Password" })
         }
-      if(user.accountStatus === "inactive") {
+        if (user.accountStatus === "inactive") {
             return res.status(403).json({ msg: "This account has been deactivated." })
         }
         const passwordMatch = await bcrypt.compare(password, user.password)
         delete value.confrimPassword
 
-        if(!passwordMatch) {
+        if (!passwordMatch) {
             return res.status(400).json({ msg: "Wrong Email or Password" })
         }
-        const token = jwt.sign({ id: user._id, role: user.role}, process.env.JWT_SECRET, { expiresIn: "1d" })
+        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1d" })
         res.status(200).json({ msg: `Logged In Successfully. Welcome ${user.fullName}!`, token })
     } catch (error) {
-       next(error)
+        next(error)
     }
- }
+}
 
-const currentUser = async (req, res ,next) => {
+const currentUser = async (req, res, next) => {
     try {
         const userData = await User.findById(req.user.id).select("-password")
         const user = {
@@ -82,19 +107,70 @@ const currentUser = async (req, res ,next) => {
             role: userData.role,
             onboarding: userData.onboardingStatus
         }
-        if(!user) {
+        if (!user) {
             return res.status(404).json({ msg: "User Not Found" })
         }
-        
+
         res.status(200).json({ user })
     } catch (err) {
         next(err)
     }
 }
- 
 
- module.exports = {
+const searchUsers = async (req, res, next) => {
+  try {
+    const { query } = req.query;
+
+    if (!query?.trim()) {
+      return res.status(400).json({
+        msg: "Search query is required",
+      });
+    }
+
+    const users = await User.find({
+      $or: [
+        {
+          employeeId: {
+            $regex: query,
+            $options: "i",
+          },
+        },
+        {
+          firstName: {
+            $regex: query,
+            $options: "i",
+          },
+        },
+        {
+          lastName: {
+            $regex: query,
+            $options: "i",
+          },
+        },
+        {
+          email: {
+            $regex: query,
+            $options: "i",
+          },
+        },
+      ],
+    })
+      .select("employeeId firstName lastName email role")
+      .limit(10);
+
+    res.status(200).json({
+      success: true,
+      count: users.length,
+      users,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
     register,
     login,
-    currentUser
- }
+    currentUser,
+     searchUsers
+}

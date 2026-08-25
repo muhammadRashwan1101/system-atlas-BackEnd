@@ -1,5 +1,5 @@
 const Workspace = require("../models/workspace.model");
-const { workspaceValidation } = require("./validation/workspaceValidation");
+const  workspaceValidation = require("./validation/workspaceValidation");
 const CheckRole = require("../middlewares/CheckRoleMiddleware");
 const User = require("../models/user.model");
 

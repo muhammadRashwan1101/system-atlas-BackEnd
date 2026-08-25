@@ -1,24 +1,41 @@
-const projectController = require("../controllers/project.controller")
-const authMiddleware = require("../middlewares/authMiddleware")
-const router = require("express").Router()
+﻿const projectController = require("../controllers/project.controller");
+const authMiddleware = require("../middlewares/authMiddleware");
+const setupWizardController = require("../controllers/setupWizard.controller");
+const architechtureValidator = require("../middlewares/architechtureValidator");
+const componentController = require("../controllers/component.controller");
+const relationshipController = require("../controllers/relationship.controller");
+const wizardContextMiddleware = require("../middlewares/wizardContextMiddleware");
+
+const router = require("express").Router();
 router.use(authMiddleware);
-router.route("/workspaces/:workspaceId/projects")
-    .post(projectController.createProject);
-router.route("/workspaces/:workspaceId/projects")
-    .get(projectController.getProjects);
 
 router.route("/:id")
-const CheckRoleMiddleware = require("../middlewares/CheckRoleMiddleware")
-const setupWizardController = require("../controllers/setupWizard.controller")
-
-router.use(authMiddleware)
-
-router.route("/:projectId")
     .get(projectController.getProjectById)
     .patch(projectController.updateProject)
-    .delete(projectController.deleteProject)
+    .delete(projectController.deleteProject);
 
 router.route("/:projectId/wizard")
-    .post(setupWizardController.newSetupWizard)
-    
-module.exports = router
+    .post(architechtureValidator, setupWizardController.newSetupWizard);
+
+router.route("/:projectId/wizard/:wizardId")
+    .get(wizardContextMiddleware, setupWizardController.getWizard)
+    .patch(wizardContextMiddleware, setupWizardController.updateSetupWizard, componentController.createComponent);
+
+router.route("/:projectId/components")
+    .get(architechtureValidator, componentController.getComponentsByProjectId);
+
+router.route("/:projectId/components/:componentId")
+    .get(architechtureValidator, componentController.getComponentById)
+    .patch(architechtureValidator, componentController.updateComponent)
+    .delete(architechtureValidator, componentController.deleteComponent);
+
+router.route("/:projectId/relationships")
+    .post(architechtureValidator, relationshipController.createRelationship)
+    .get(architechtureValidator, relationshipController.getRelationships);
+
+router.route("/:projectId/relationships/:relationshipId")
+    .get(architechtureValidator, relationshipController.getRelationshipById)
+    .patch(architechtureValidator, relationshipController.updateRelationship)
+    .delete(architechtureValidator, relationshipController.deleteRelationship);
+
+module.exports = router;

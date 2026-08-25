@@ -50,6 +50,12 @@ const projectSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Workspace"
     },
+    departments: [
+    {
+        type: String,
+        trim: true
+    }
+],
  status: {
     type: String,
     enum: ["active", "inactive"],

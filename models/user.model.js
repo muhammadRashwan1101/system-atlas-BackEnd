@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ["user", "admin", "manager", "techLead"],
+        enum: ["user", "admin"],
         default: "user"
     },
     onboardingStatus: {
@@ -77,7 +77,14 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ["active", "inactive"],
         default: "active"
-    }
+    },
+    employeeId: {
+    type: String,
+    unique: true,
+    required: true,
+    trim: true
+},
+
 }, {timestamps: true})
 
 userSchema.virtual("fullName").get(function() {

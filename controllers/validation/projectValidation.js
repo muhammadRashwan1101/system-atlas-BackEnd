@@ -1,16 +1,16 @@
 const Joi = require("joi");
 
 const projectValidation = Joi.object({
-    name: Joi.string().trim()  .min(5).max(50) .required() .messages({
-            "string.empty": "Project name is required",
-            "string.min": "Project name must be at least 5 characters",
-            "string.max": "Project name cannot exceed 50 characters",
-        }),
+    name: Joi.string().trim().min(5).max(50).required().messages({
+        "string.empty": "Project name is required",
+        "string.min": "Project name must be at least 5 characters",
+        "string.max": "Project name cannot exceed 50 characters",
+    }),
 
-    description: Joi.string() .trim() .max(500) .required() .messages({
-            "string.empty": "Project description is required",
-            "string.max": "Description cannot exceed 500 characters",
-        }),
+    description: Joi.string().trim().max(500).required().messages({
+        "string.empty": "Project description is required",
+        "string.max": "Description cannot exceed 500 characters",
+    }),
 
     startDate: Joi.date()
         .required()
@@ -55,10 +55,10 @@ const projectValidation = Joi.object({
             "any.required": "System topology is required",
         }),
 
-    department: Joi.string()
-        .trim()
-        .allow("")
-        .optional(),
+    departments: Joi.array()
+        .items(Joi.string())
+        .min(1)
+        .required(),
 
     tags: Joi.array()
         .items(Joi.string().trim())
@@ -80,4 +80,4 @@ const projectValidation = Joi.object({
         }),
 });
 
-module.exports = {projectValidation };
+module.exports = { projectValidation };
