@@ -1,11 +1,22 @@
-const Project = require("../models/project.model")
-const { projectValidation } = require("../controllers/validation/projectValidation")
-const Workspace = require("../models/workspace.model")
-const CheckRole = require("../middlewares/CheckRoleMiddleware")
+
+const Project = require("../models/project.model");
+const {
+    projectValidation,
+} = require("../controllers/validation/projectValidation");
+
+const Workspace = require("../models/workspace.model");
+const Team = require("../models/teams.model");
+const CheckRole = require("../middlewares/CheckRoleMiddleware");
+
+// =====================================================
+// Create Project
+// =====================================================
 
 const createProject = async (req, res, next) => {
     try {
-        if (!CheckRole(req, res, ["admin", "manager"])) return;
+        if (!CheckRole(req, res, ["admin", "manager"])) {
+            return;
+        }
 
         const { workspaceId } = req.params;
 
@@ -15,10 +26,13 @@ const createProject = async (req, res, next) => {
             });
         }
 
-        const { error, value } = projectValidation.validate(req.body, {
-            abortEarly: false,
-            stripUnknown: true,
-        });
+        const { error, value } = projectValidation.validate(
+            req.body,
+            {
+                abortEarly: false,
+                stripUnknown: true,
+            }
+        );
 
         if (error) {
             return res.status(400).json({
@@ -26,16 +40,64 @@ const createProject = async (req, res, next) => {
             });
         }
 
-        const existingWorkspace = await Workspace.findOne({
-            _id: workspaceId,
-            ownerId: req.user._id,
-        });
+        // =====================================================
+        // Debug
+        // =====================================================
 
-        if (!existingWorkspace) {
+        console.log("========== CREATE PROJECT DEBUG ==========");
+        console.log("USER:", req.user);
+        console.log("USER ID:", req.user?.id);
+        console.log("USER _ID:", req.user?._id);
+        console.log("USER ROLE:", req.user?.role);
+        console.log("WORKSPACE ID:", workspaceId);
+
+        // =====================================================
+        // Find Workspace
+        // =====================================================
+
+        const workspaceCheck = await Workspace.findById(workspaceId);
+
+        console.log(
+            "WORKSPACE EXISTS:",
+            !!workspaceCheck
+        );
+
+        console.log(
+            "WORKSPACE OWNER:",
+            workspaceCheck?.ownerId?.toString()
+        );
+
+        console.log(
+            "SAME OWNER:",
+            workspaceCheck?.ownerId?.toString() ===
+                req.user?.id?.toString()
+        );
+
+        console.log("==========================================");
+
+        // Workspace doesn't exist
+        if (!workspaceCheck) {
             return res.status(404).json({
-                msg: "Workspace not found or access denied",
+                msg: "Workspace not found",
             });
         }
+
+        // =====================================================
+        // Check Workspace Ownership
+        // =====================================================
+
+        if (
+            workspaceCheck.ownerId?.toString() !==
+            req.user?.id?.toString()
+        ) {
+            return res.status(403).json({
+                msg: "You do not have access to this workspace",
+            });
+        }
+
+        // =====================================================
+        // Check Duplicate Project
+        // =====================================================
 
         const projectExists = await Project.findOne({
             workspaceId,
@@ -48,9 +110,13 @@ const createProject = async (req, res, next) => {
             });
         }
 
+        // =====================================================
+        // Create Project
+        // =====================================================
+
         const project = await Project.create({
             ...value,
-            ownerId: req.user._id,
+            ownerId: req.user.id,
             workspaceId,
             status: "active",
         });
@@ -64,145 +130,205 @@ const createProject = async (req, res, next) => {
         next(error);
     }
 };
+
+// =====================================================
+// Get Projects
+// =====================================================
+
 const getProjects = async (req, res, next) => {
     try {
-        if (!CheckRole(req, res, ["admin", "manager", "techLead"])) return;
-
-
-        let query = { workspaceId: req.params.workspaceId };
-
-        const restrictedRoles = ["user", "techLead"];
-
-        if (restrictedRoles.includes(req.user.role)) {
-
-            const userTeams = await Team.find({
-                $or: [
-                    { members: req.user.id },
-                    { teamLead: req.user.id }
-                ]
-            }).select("_id");
-
-            const teamIds = userTeams.map(team => team._id);
-
-            query.$or = [
-                { ownerId: req.user.id },
-                { ownerTeam: { $in: teamIds } }
-            ];
+        if (
+            !CheckRole(req, res, [
+                "admin",
+                "manager",
+                "techLead",
+            ])
+        ) {
+            return;
         }
-        const allProjects = await Project.find({
-            workspaceId: req.params.workspaceId,
-            ownerId: req.user.id
-        }).sort({
-            createdAt: -1
-        });
 
-
-        res.status(200).json({
-            projects: allProjects
-        });
-
-    } catch (error) {
-        next(error);
-    }
-};
-
-
-const getProjectById = async (req, res, next) => {
-    try {
-        if (!CheckRole(req, res, ["admin", "manager", "techLead"])) return;
         let query = {
-            _id: req.params.projectId,
-            workspaceId: req.params.workspaceId
+            workspaceId: req.params.workspaceId,
         };
 
         const restrictedRoles = ["user", "techLead"];
 
         if (restrictedRoles.includes(req.user.role)) {
-
             const userTeams = await Team.find({
                 $or: [
                     { members: req.user.id },
-                    { teamLead: req.user.id }
-                ]
+                    { teamLead: req.user.id },
+                ],
             }).select("_id");
 
-            const teamIds = userTeams.map(team => team._id);
-
+            const teamIds = userTeams.map(
+                (team) => team._id
+            );
 
             query.$or = [
                 { ownerId: req.user.id },
-                { ownerTeam: { $in: teamIds } }
+                { ownerTeam: { $in: teamIds } },
             ];
         }
+
+        const allProjects = await Project.find(query).sort({
+            createdAt: -1,
+        });
+
+        return res.status(200).json({
+            projects: allProjects,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// =====================================================
+// Get Project By ID
+// =====================================================
+
+const getProjectById = async (req, res, next) => {
+    try {
+        if (
+            !CheckRole(req, res, [
+                "admin",
+                "manager",
+                "techLead",
+            ])
+        ) {
+            return;
+        }
+
+        const query = {
+            _id: req.params.projectId,
+            workspaceId: req.params.workspaceId,
+        };
+
+        const restrictedRoles = ["user", "techLead"];
+
+        if (restrictedRoles.includes(req.user.role)) {
+            const userTeams = await Team.find({
+                $or: [
+                    { members: req.user.id },
+                    { teamLead: req.user.id },
+                ],
+            }).select("_id");
+
+            const teamIds = userTeams.map(
+                (team) => team._id
+            );
+
+            query.$or = [
+                { ownerId: req.user.id },
+                { ownerTeam: { $in: teamIds } },
+            ];
+        }
+
         const project = await Project.findOne(query);
 
         if (!project) {
-            return res.status(404).json({ msg: "Project not found or unauthorized" });
+            return res.status(404).json({
+                msg: "Project not found or unauthorized",
+            });
         }
 
-        return res.status(200).json({ project });
+        return res.status(200).json({
+            project,
+        });
     } catch (error) {
-
         next(error);
     }
 };
+
+// =====================================================
+// Update Project
+// =====================================================
+
 const updateProject = async (req, res, next) => {
-
     try {
-
-        if (!CheckRole(req, res, ["admin", "manager"])) return;
-
-
-        const { error, value } = projectValidation.validate(req.body, {
-            abortEarly: false,
-            stripUnknown: true,
-        });
-
-        if (error) {
-            return res.status(400).json({ msg: error.details.map((err) => err.message) });
+        if (!CheckRole(req, res, ["admin", "manager"])) {
+            return;
         }
 
-
-        const updatedProject = await Project.findOneAndUpdate(
+        const { error, value } = projectValidation.validate(
+            req.body,
             {
-                _id: req.params.projectId,
-                workspaceId: req.params.workspaceId,
-                ownerId: req.user.id
-            },
-            { $set: value },
-            { new: true, runValidators: true }
+                abortEarly: false,
+                stripUnknown: true,
+            }
         );
 
-        if (!updatedProject) {
-            return res.status(404).json({ msg: "Project not found or unauthorized" });
+        if (error) {
+            return res.status(400).json({
+                msg: error.details.map((err) => err.message),
+            });
         }
 
-        return res.status(200).json({ msg: "Project updated successfully", project: updatedProject });
+        const updatedProject =
+            await Project.findOneAndUpdate(
+                {
+                    _id: req.params.projectId,
+                    workspaceId: req.params.workspaceId,
+                },
+                {
+                    $set: value,
+                },
+                {
+                    new: true,
+                    runValidators: true,
+                }
+            );
+
+        if (!updatedProject) {
+            return res.status(404).json({
+                msg: "Project not found or unauthorized",
+            });
+        }
+
+        return res.status(200).json({
+            msg: "Project updated successfully",
+            project: updatedProject,
+        });
     } catch (error) {
         next(error);
     }
 };
 
-
+// =====================================================
+// Delete Project
+// =====================================================
 
 const deleteProject = async (req, res, next) => {
-
     try {
-        if (!CheckRole(req, res, ["admin", "manager"])) return;
-
-        const deletedProject = await Project.findOneAndDelete({
-            _id: req.params.projectId,
-            workspaceId: req.params.workspaceId,
-            ownerId: req.user.id
-        });
-
-        if (!deletedProject) {
-            return res.status(404).json({ msg: "Project not found or unauthorized" });
+        if (!CheckRole(req, res, ["admin", "manager"])) {
+            return;
         }
 
-        return res.status(200).json({ msg: "Project deleted successfully" });
+        const deletedProject =
+            await Project.findOneAndDelete({
+                _id: req.params.projectId,
+                workspaceId: req.params.workspaceId,
+            });
+
+        if (!deletedProject) {
+            return res.status(404).json({
+                msg: "Project not found or unauthorized",
+            });
+        }
+
+        return res.status(200).json({
+            msg: "Project deleted successfully",
+        });
     } catch (error) {
         next(error);
     }
 };
-module.exports = { createProject, getProjects, getProjectById, updateProject, deleteProject }
+
+module.exports = {
+    createProject,
+    getProjects,
+    getProjectById,
+    updateProject,
+    deleteProject,
+};
+

@@ -51,7 +51,7 @@ const getTeams = async (req, res) => {
 
     res.status(200).json({ success: true, count: teams.length, data: teams });
   } catch (err) {
-    res.status(500).json({ msg: err.message });
+    res.status(500).json({ msg: err.message, source: "getTeams" });
   }
 };
 
@@ -299,17 +299,73 @@ const getTeamMembers = async (req,res,next)=>{
     }
 
 }
+const getTeamsByCategory = async (req, res, next) => {
+  try {
+    const { category } = req.query;
+
+    if (!category || !category.trim()) {
+      return res.status(400).json({
+        msg: "Category is required",
+      });
+    }
+
+    const categories = category
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+    const validCategories = [
+      "Platform",
+      "Frontend",
+      "Backend",
+      "DevOps",
+      "Cloud",
+      "Mobile",
+      "Security",
+      "Data Science",
+      "AI/ML",
+      "UI/UX",
+      "QA",
+      "Other",
+    ];
+
+    const invalidCategories = categories.filter(
+      (item) => !validCategories.includes(item)
+    );
+
+    if (invalidCategories.length > 0) {
+      return res.status(400).json({
+        msg: `Invalid category: ${invalidCategories.join(", ")}`,
+      });
+    }
+
+    const teams = await Team.find({
+      category: { $in: categories },
+      status: "active",
+    })
+      .populate("teamLead", "firstName lastName email role")
+      .populate("members", "firstName lastName email role");
+
+    return res.status(200).json({
+      success: true,
+      count: teams.length,
+      data: teams,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 
 
 module.exports = {
   createTeam,
   getTeams,
+  getTeamsByCategory,
   getTeamById,
   updateTeam,
   deleteTeam,
   addMember,
   getTeamMembers
 };
-
 

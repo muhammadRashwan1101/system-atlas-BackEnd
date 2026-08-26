@@ -35,6 +35,10 @@ const componentSchema = new mongoose.Schema({
         type: [String],
         default: []
     },
+    ownerRefCode: {
+        type: String,
+        default: null
+    },
     ownerTeam: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Team",
@@ -54,7 +58,7 @@ const componentSchema = new mongoose.Schema({
         type: [String],
         default: []
     },
-    metadata: {
+    documentation: {
         type: mongoose.Schema.Types.Mixed,
         default: {}
     },

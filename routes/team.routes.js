@@ -16,7 +16,9 @@ router.get(
   teamController.getTeamMembers
 );
 
+
 // Read Single, Update & Delete
+router.get("/by-category", teamController.getTeamsByCategory);
 router.get("/:id", authMiddleware, teamController.getTeamById);
 router.put("/:id", authMiddleware, teamController.updateTeam);
 router.delete("/:id", authMiddleware, teamController.deleteTeam);

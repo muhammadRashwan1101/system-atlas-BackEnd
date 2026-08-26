@@ -7,7 +7,9 @@ const wizardSchema = new mongoose.Schema ({
             "basicInfo",
             "techStack",
             "ownership",
-            "relationship",
+            "documentation",
+            "relationships",
+            "review",
             "completed"
         ],
         required: true,

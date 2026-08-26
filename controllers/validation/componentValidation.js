@@ -10,6 +10,8 @@ const componentValidation = Joi.object ({
         "string.empty": "Component description is required",
         "string.max": "Description cannot exceed 500 characters",
     }),
+    projectId: Joi.string().hex().length(24).allow(null).required(),
+
     type: Joi.string().valid(
         "cloud-service",
         "database",
@@ -30,19 +32,40 @@ const componentValidation = Joi.object ({
         "array.unique": "Duplicate technologies are not allowed",
         "any.required": "Technologies are required"
     }),
+    ownerRefCode: Joi.string().trim().min(5).max(50).allow(null, "").messages({
+        "string.min": "Owner reference code must be at least 5 characters",
+        "string.max": "Owner reference code cannot exceed 50 characters",
+    }),
+    ownerTeam: Joi.string().hex().length(24).allow(null, "").messages({
+        "string.length": "Invalid Owner Team ID",
+        "string.hex": "Invalid Owner Team ID"
+    }),
+    technicalLead: Joi.string().hex().length(24).allow(null, "").messages({
+        "string.length": "Invalid Technical Lead ID",
+        "string.hex": "Invalid Technical Lead ID"
+    }),
+    maintainers: Joi.array().items(Joi.string().hex().length(24)).unique().messages({
+        "string.length": "Invalid Maintainer ID",
+        "string.hex": "Invalid Maintainer ID"
+    }).messages({
+        "array.base": "Maintainers must be an array",
+    }),
     tags: Joi.array().items(Joi.string()).default([]).messages({
         "string.empty": "No tags selected",
     }),
-    metadata: Joi.object().unknown(true).default({}),
+    documentation: Joi.object().unknown(true).default({}),
     status: Joi.string().valid("active", "inactive","planned").default("active").messages({
         "string.empty": "Please, choose the component status",
         "any.only": "Component statues must be one of the supported status",
     }),
-    environment: Joi.string().valid("development", "staging", "production").default("development").messages({
+    deploymentEnvironment: Joi.string().valid("development", "staging", "production").default("development").messages({
         "string.empty": "Please, choose the component environment",
         "any.only": "Component environment must be one of the supported environments",
+    }),
+    createdBy: Joi.string().hex().length(24).required().messages({
+        "string.length": "Invalid Curator ID",
+        "string.hex": "Invalid Curator ID"
     })
-    
 })
 
 module.exports = { componentValidation }

@@ -68,7 +68,7 @@ const login = async (req, res, next) => {
     const { error, value } = loginValidation.validate(req.body, {
         abortEarly: false,
         stripUnknown: true
-    })
+    });
 
     if (error) {
         return res.status(400).json({ msg: error.details.map(err => err.message) })
@@ -100,9 +100,16 @@ const login = async (req, res, next) => {
 
 const currentUser = async (req, res, next) => {
     try {
-        const userData = await User.findById(req.user.id).select("-password")
+        const userData = await User.findById(req.user.id).select("-password");
+        if (!userData) {
+            return res.status(404).json({ msg: "User Not Found" });
+        }
+
         const user = {
+            id: userData._id,
             name: userData.fullName,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
             email: userData.email,
             role: userData.role,
             onboarding: userData.onboardingStatus

@@ -1,16 +1,25 @@
 const Joi = require("joi");
 
 const projectValidation = Joi.object({
-    name: Joi.string().trim().min(5).max(50).required().messages({
-        "string.empty": "Project name is required",
-        "string.min": "Project name must be at least 5 characters",
-        "string.max": "Project name cannot exceed 50 characters",
-    }),
+    name: Joi.string()
+        .trim()
+        .min(5)
+        .max(50)
+        .required()
+        .messages({
+            "string.empty": "Project name is required",
+            "string.min": "Project name must be at least 5 characters",
+            "string.max": "Project name cannot exceed 50 characters",
+        }),
 
-    description: Joi.string().trim().max(500).required().messages({
-        "string.empty": "Project description is required",
-        "string.max": "Description cannot exceed 500 characters",
-    }),
+    description: Joi.string()
+        .trim()
+        .max(500)
+        .required()
+        .messages({
+            "string.empty": "Project description is required",
+            "string.max": "Description cannot exceed 500 characters",
+        }),
 
     startDate: Joi.date()
         .required()
@@ -29,11 +38,7 @@ const projectValidation = Joi.object({
         }),
 
     targetEnvironment: Joi.string()
-        .valid(
-            "production ready",
-            "prototype",
-            "development"
-        )
+        .valid("production ready", "prototype", "development")
         .required()
         .messages({
             "any.only":
@@ -42,12 +47,7 @@ const projectValidation = Joi.object({
         }),
 
     systemTopology: Joi.string()
-        .valid(
-            "monolithic",
-            "microservices",
-            "event_driven",
-            "hybrid"
-        )
+        .valid("monolithic", "microservices", "event_driven", "hybrid")
         .required()
         .messages({
             "any.only":

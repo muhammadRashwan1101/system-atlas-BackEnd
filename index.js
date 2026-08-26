@@ -7,6 +7,10 @@ const morgan = require("morgan");
 
 const connectDB = require("./db/db");
 
+// =====================================================
+// Routes
+// =====================================================
+
 const authRouter = require("./routes/auth.routes");
 const workspaceRouter = require("./routes/workspace.routes");
 const ProjectRouter = require("./routes/project.route");
@@ -16,38 +20,77 @@ const setupWizardRouter = require("./routes/wizard.routes");
 const teamLeadRoutes = require("./routes/teamLeadRoutes");
 const teamRoutes = require("./routes/team.routes");
 
+// =====================================================
+// Middleware
+// =====================================================
+
 const globalErrorHandler = require("./middlewares/globalErrorHandler");
+
+// =====================================================
+// App
+// =====================================================
 
 const app = express();
 
-// Middlewares
+// =====================================================
+// Global Middlewares
+// =====================================================
+
 app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
 
-// Routes
+// =====================================================
+// API Routes
+// =====================================================
+
 app.use("/api/auth", authRouter);
 
-// Workspace & Project
-app.use("/api/workspace", workspaceRouter);
-app.use("/api", ProjectRouter);
+// Workspace
+app.use("/api/workspaces", workspaceRouter);
 
-// Team
+// Projects
+app.use("/api/projects", ProjectRouter);
+
+// Profile
+app.use("/api/profile", profileRouter);
+
+// Team Leads
 app.use("/api/team-leads", teamLeadRoutes);
+
+// Teams
 app.use("/api/teams", teamRoutes);
 
-// Other Routes
-app.use("/api/profile", profileRouter);
-app.use("/api/technologies", TechnologiesRouter);
+// Wizard
 app.use("/api/wizard", setupWizardRouter);
 
+// Technologies
+app.use("/api/technologies", TechnologiesRouter);
+
+// =====================================================
+// Static Files
+// =====================================================
+
+app.use("/uploads", express.static("uploads"));
+
+// =====================================================
 // Global Error Handler
+// =====================================================
+
 app.use(globalErrorHandler);
 
+// =====================================================
 // Database
+// =====================================================
+
 connectDB();
 
+// =====================================================
 // Start Server
-app.listen(process.env.PORT || 8000, () => {
-  console.log(`Server is running on port ${process.env.PORT || 8000}`);
+// =====================================================
+
+const PORT = process.env.PORT || 8000;
+
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });

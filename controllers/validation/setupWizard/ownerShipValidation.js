@@ -1,7 +1,9 @@
 const joi = require("joi")
 
 const ownerShipValidation = joi.object({
-    ownerTeam: joi.string().hex().length(24).allow(null),
+    ownerRefCode: joi.string(),
+    
+    ownerTeam: joi.string().hex().length(24).allow(null).required(),
 
     technicalLead: joi.string().hex().length(24).allow(null),
 
@@ -13,3 +15,5 @@ const ownerShipValidation = joi.object({
             "production"
         ).required()
 })
+
+module.exports = { ownerShipValidation }
