@@ -187,9 +187,43 @@ const setNewPassword = async (req, res, next) => {
     }
 };
 
+
+const completeOnboarding = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ msg: "User Not Found" });
+        }
+        user.onboardingStatus = "completed";
+        await user.save();
+
+        res.status(200).json({
+            msg: "Onboarding completed successfully",
+            user: {
+                id: user._id,
+                name: user.fullName,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+                role: user.role,
+                onboarding: "completed",
+                onboardingStatus: "completed",
+                mustChangePassword: Boolean(user.mustChangePassword),
+                workspaceAccess: user.workspaceAccess,
+                avatar: user.avatar,
+                jobTitle: user.jobTitle,
+                department: user.department
+            }
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
     register,
     login,
     currentUser,
-    setNewPassword
+    setNewPassword,
+    completeOnboarding
 };

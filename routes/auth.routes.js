@@ -7,5 +7,6 @@ router.post("/login", authController.login);
 router.get("/current-user", authMiddleware, authController.currentUser);
 router.patch("/set-password", authMiddleware, authController.setNewPassword);
 router.patch("/password", authMiddleware, authController.setNewPassword);
+router.patch("/complete-onboarding", authMiddleware, authController.completeOnboarding);
 
 module.exports = router;
