@@ -1,8 +1,9 @@
-const mongoose = require("mongoose");
+﻿const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
   {
     // ================= Basic Information =================
+
     firstName: {
       type: String,
       trim: true,
@@ -20,7 +21,6 @@ const userSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
-
 
     username: {
       type: String,
@@ -46,6 +46,7 @@ const userSchema = new mongoose.Schema(
     },
 
     // ================= Organization =================
+
     role: {
       type: String,
       enum: [
@@ -58,6 +59,11 @@ const userSchema = new mongoose.Schema(
         "viewer",
       ],
       default: "user",
+    },
+
+    jobTitle: {
+      type: String,
+      default: "",
     },
 
     level: {
@@ -83,7 +89,15 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
+    employeeId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+    },
+
     // ================= Workspace =================
+
     workspaceId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Workspace",
@@ -91,11 +105,17 @@ const userSchema = new mongoose.Schema(
     },
 
     workspaceAccess: {
-      type: [String],
+      type: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Workspace",
+        },
+      ],
       default: [],
     },
 
     // ================= Teams =================
+
     teams: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -110,6 +130,7 @@ const userSchema = new mongoose.Schema(
     },
 
     // ================= Reporting =================
+
     reportsTo: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -117,12 +138,8 @@ const userSchema = new mongoose.Schema(
     },
 
     // ================= Profile =================
-    avatar: {
-      type: String,
-      default: "",
-    },
 
-    jobTitle: {
+    avatar: {
       type: String,
       default: "",
     },
@@ -144,6 +161,12 @@ const userSchema = new mongoose.Schema(
     },
 
     // ================= Security =================
+
+    mustChangePassword: {
+      type: Boolean,
+      default: false,
+    },
+
     mustResetPassword: {
       type: Boolean,
       default: true,
@@ -155,6 +178,7 @@ const userSchema = new mongoose.Schema(
     },
 
     // ================= Invitation =================
+
     invitationSent: {
       type: Boolean,
       default: false,
@@ -166,6 +190,7 @@ const userSchema = new mongoose.Schema(
     },
 
     // ================= Account =================
+
     accountStatus: {
       type: String,
       enum: [
@@ -187,12 +212,32 @@ const userSchema = new mongoose.Schema(
     },
 
     // ================= Notifications =================
+
     notificationPreferences: {
-      ownershipChanges: { type: Boolean, default: true },
-      projectAssignment: { type: Boolean, default: true },
-      relationshipChanges: { type: Boolean, default: true },
-      criticalAlerts: { type: Boolean, default: true },
-      documentationAlerts: { type: Boolean, default: true },
+      ownershipChanges: {
+        type: Boolean,
+        default: true,
+      },
+
+      projectAssignment: {
+        type: Boolean,
+        default: true,
+      },
+
+      relationshipChanges: {
+        type: Boolean,
+        default: true,
+      },
+
+      criticalAlerts: {
+        type: Boolean,
+        default: true,
+      },
+
+      documentationAlerts: {
+        type: Boolean,
+        default: true,
+      },
     },
   },
   {
@@ -201,6 +246,7 @@ const userSchema = new mongoose.Schema(
 );
 
 // ================= Virtual Full Name =================
+
 userSchema.virtual("displayName").get(function () {
   if (this.fullName) {
     return this.fullName;
@@ -208,6 +254,8 @@ userSchema.virtual("displayName").get(function () {
 
   return `${this.firstName || ""} ${this.lastName || ""}`.trim();
 });
+
+// ================= JSON =================
 
 userSchema.set("toJSON", {
   virtuals: true,

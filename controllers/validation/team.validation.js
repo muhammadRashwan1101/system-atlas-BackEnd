@@ -48,7 +48,6 @@ const createTeamSchema = Joi.object({
     teamLead: Joi.string()
         .hex()
         .length(24)
-        .required()
         .messages({
             'string.length': 'teamLead must be a valid 24-character MongoDB ObjectId',
             'string.hex': 'teamLead must be a valid hexadecimal string'
@@ -98,10 +97,29 @@ const validateTeamIdSchema = Joi.object({
             'any.required': 'Team ID parameter is required'
         })
 });
+const addTeamMemberSchema = Joi.object({
+  userId:Joi.string().required(),
+
+role:Joi.string()
+.valid(
+"member",
+"teamLead",
+"developer",
+"reviewer",
+"manager"
+)
+.default("member")
+
+})
+
+
+
+
 
 
 module.exports = {
     createTeamSchema,
     updateTeamSchema,
-    validateTeamIdSchema
+    validateTeamIdSchema,
+    addTeamMemberSchema 
 };

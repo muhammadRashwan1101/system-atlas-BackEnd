@@ -1,47 +1,90 @@
-const express = require('express');
-const dotenv = require('dotenv');
-const cors = require('cors');
-const morgan = require('morgan');
-const connectDB = require('./db/db');
+const express = require("express");
+const dotenv = require("dotenv");
+const cors = require("cors");
+const morgan = require("morgan");
 
+const connectDB = require("./db/db");
+
+// =====================================================
 // Routes
-const authRouter = require('./routes/auth.routes');
-const workspaceRouter = require('./routes/workspace.routes');
-const ProjectRouter = require('./routes/project.route');
-const profileRouter = require('./routes/profile.route');
-const teamLeadRoutes = require('./routes/teamLeadRoutes');
-const teamRoutes = require('./routes/team.routes');
+// =====================================================
+
+const authRouter = require("./routes/auth.routes");
+const workspaceRouter = require("./routes/workspace.routes");
+const projectRouter = require("./routes/project.route");
+const profileRouter = require("./routes/profile.route");
+const technologiesRouter = require("./routes/technologies.routes");
+const teamLeadRoutes = require("./routes/teamLeadRoutes");
+const teamRoutes = require("./routes/team.routes");
 const userRoutes = require("./routes/createUserRoute");
 const teamMemberRoutes = require("./routes/teamMember.routes");
-const wizardRoutes = require('./routes/wizard.routes');
+const wizardRoutes = require("./routes/wizard.routes");
+
+// =====================================================
 // Middleware
-const globalErrorHandler = require('./middlewares/globalErrorHandler');
+// =====================================================
+
+const globalErrorHandler = require("./middlewares/globalErrorHandler");
+
+// =====================================================
+// Environment
+// =====================================================
 
 dotenv.config();
 
+// =====================================================
+// App
+// =====================================================
+
 const app = express();
 
-// Middlewares
+// =====================================================
+// Global Middlewares
+// =====================================================
+
 app.use(cors());
 app.use(express.json());
-app.use(morgan('dev'));
+app.use(morgan("dev"));
 
-// Routes
-app.use('/api/auth', authRouter);
-app.use('/api/workspaces', workspaceRouter);
-app.use('/api/projects', ProjectRouter);
-app.use('/api/profile', profileRouter);
-app.use('/api/team-leads', teamLeadRoutes);
-app.use('/api/wizard', wizardRoutes);
-app.use('/api/teams', teamRoutes);
+// =====================================================
+// API Routes
+// =====================================================
+
+app.use("/api/auth", authRouter);
+app.use("/api/workspaces", workspaceRouter);
+app.use("/api/projects", projectRouter);
+app.use("/api/profile", profileRouter);
+app.use("/api/team-leads", teamLeadRoutes);
+app.use("/api/teams", teamRoutes);
+app.use("/api/wizard", wizardRoutes);
+app.use("/api/technologies", technologiesRouter);
 app.use("/api/users", userRoutes);
 app.use("/api", teamMemberRoutes);
-app.use('/uploads', express.static('uploads'));
 
-app.use(globalErrorHandler)
+// =====================================================
+// Static Files
+// =====================================================
 
-connectDB()
+app.use("/uploads", express.static("uploads"));
 
-app.listen(process.env.PORT || 8000, () => {
-    console.log(`Server is running on port ${process.env.PORT || 8000}`);
+// =====================================================
+// Global Error Handler
+// =====================================================
+
+app.use(globalErrorHandler);
+
+// =====================================================
+// Database
+// =====================================================
+
+connectDB();
+
+// =====================================================
+// Start Server
+// =====================================================
+
+const PORT = process.env.PORT || 8000;
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });

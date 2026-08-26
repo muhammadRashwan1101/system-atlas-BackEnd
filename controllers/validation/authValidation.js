@@ -1,4 +1,6 @@
-const Joi = require("joi");
+﻿const Joi = require("joi");
+
+// ================= Password Regex =================
 
 const passwordRegex =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&]).{8,}$/;
@@ -6,56 +8,108 @@ const passwordRegex =
 // ================= Login Validation =================
 
 const loginValidation = Joi.object({
-  email: Joi.string().email().required().messages({
-    "string.email": "Please Enter a Valid Email",
-    "any.required": "Please Enter your Email",
-  }),
+  email: Joi.string()
+    .email()
+    .required()
+    .messages({
+      "string.email":
+        "Please Enter a Valid Email",
 
-  password: Joi.string().required().messages({
-    "any.required": "Please Enter your Password",
-  }),
+      "string.empty":
+        "Please Enter your Email",
+
+      "any.required":
+        "Please Enter your Email",
+    }),
+
+  password: Joi.string()
+    .required()
+    .messages({
+      "string.empty":
+        "Please Enter your Password",
+
+      "any.required":
+        "Please Enter your Password",
+    }),
 });
 
 // ================= Sign Up Validation =================
 
 const signUpValidation = Joi.object({
-  firstName: Joi.string().trim().required().messages({
-    "any.required": "Please Enter your First Name",
-  }),
+  firstName: Joi.string()
+    .trim()
+    .required()
+    .messages({
+      "string.empty":
+        "Please Enter your First Name",
 
-  lastName: Joi.string().trim().required().messages({
-    "any.required": "Please Enter your Last Name",
-  }),
+      "any.required":
+        "Please Enter your First Name",
+    }),
+
+  lastName: Joi.string()
+    .trim()
+    .required()
+    .messages({
+      "string.empty":
+        "Please Enter your Last Name",
+
+      "any.required":
+        "Please Enter your Last Name",
+    }),
+
   username: Joi.string()
     .trim()
     .lowercase()
     .required()
     .messages({
-      "any.required": "Please Enter your Username",
-      "string.empty": "Please Enter your Username",
+      "string.empty":
+        "Please Enter your Username",
+
+      "any.required":
+        "Please Enter your Username",
     }),
-  email: Joi.string().email().required().messages({
-    "string.email": "Please Enter a Valid Email",
-    "any.required": "Please Enter your Email",
-  }),
+
+  email: Joi.string()
+    .email()
+    .trim()
+    .lowercase()
+    .required()
+    .messages({
+      "string.email":
+        "Please Enter a Valid Email",
+
+      "string.empty":
+        "Please Enter your Email",
+
+      "any.required":
+        "Please Enter your Email",
+    }),
 
   password: Joi.string()
     .min(8)
     .pattern(passwordRegex)
     .required()
     .messages({
-      "string.min": "Password must be at least 8 characters",
+      "string.min":
+        "Password must be at least 8 characters",
+
       "string.pattern.base":
         "Password must contain at least one uppercase letter, one lowercase letter, one number and one special character",
-      "any.required": "Please Enter your Password",
+
+      "any.required":
+        "Please Enter your Password",
     }),
 
   confirmPassword: Joi.string()
     .valid(Joi.ref("password"))
     .required()
     .messages({
-      "any.only": "Passwords do not match",
-      "any.required": "Please Confirm your Password",
+      "any.only":
+        "Passwords do not match",
+
+      "any.required":
+        "Please Confirm your Password",
     }),
 
   role: Joi.string()
@@ -69,25 +123,100 @@ const signUpValidation = Joi.object({
       "viewer"
     )
     .default("user"),
+
+  jobTitle: Joi.string()
+    .allow("")
+    .optional(),
+
+  department: Joi.string()
+    .allow("")
+    .optional(),
+
+  level: Joi.string()
+    .valid(
+      "intern",
+      "junior",
+      "mid",
+      "senior",
+      "lead",
+      ""
+    )
+    .allow("")
+    .optional(),
+
+  location: Joi.string()
+    .allow("")
+    .optional(),
+
+  bio: Joi.string()
+    .max(500)
+    .allow("")
+    .optional(),
+
+  avatar: Joi.string()
+    .allow("")
+    .optional(),
+
+  techStack: Joi.array()
+    .items(Joi.string())
+    .default([]),
+
+  workspaceAccess: Joi.array()
+    .items(
+      Joi.string()
+        .hex()
+        .length(24)
+    )
+    .default([]),
+
+  onboardingStatus: Joi.string()
+    .valid("pending", "completed")
+    .default("pending"),
+
+  mustChangePassword: Joi.boolean()
+    .default(false),
+
+  mustResetPassword: Joi.boolean()
+    .default(true),
+
+  accountStatus: Joi.string()
+    .valid(
+      "pending",
+      "invited",
+      "active",
+      "inactive"
+    )
+    .default("pending"),
 });
 
 // ================= Create User Validation =================
 
 const createUserValidation = Joi.object({
-  firstName: Joi.string().trim().required(),
+  firstName: Joi.string()
+    .trim()
+    .required(),
 
-  lastName: Joi.string().trim().required(),
+  lastName: Joi.string()
+    .trim()
+    .required(),
 
-  username: Joi.string().trim().min(3).required(),
+  username: Joi.string()
+    .trim()
+    .min(3)
+    .required(),
 
-  email: Joi.string().email().required(),
+  email: Joi.string()
+    .email()
+    .required(),
 
   password: Joi.string()
     .min(8)
     .pattern(passwordRegex)
     .required()
     .messages({
-      "string.min": "Password must be at least 8 characters",
+      "string.min":
+        "Password must be at least 8 characters",
+
       "string.pattern.base":
         "Password must contain at least one uppercase letter, one lowercase letter, one number and one special character",
     }),
@@ -119,10 +248,13 @@ const createUserValidation = Joi.object({
     .length(24)
     .required(),
 
-  teamId: Joi.string()
-    .hex()
-    .length(24)
-    .allow(null, ""),
+  teams: Joi.array()
+    .items(
+      Joi.string()
+        .hex()
+        .length(24)
+    )
+    .default([]),
 
   department: Joi.string()
     .allow("")
