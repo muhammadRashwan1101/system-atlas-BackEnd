@@ -10,6 +10,12 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    username: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+    },
     email: {
       type: String,
       required: true,
@@ -24,8 +30,12 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["user", "admin", "manager", "techLead"],
+      enum: ["user", "admin", "manager", "techLead", "developer"],
       default: "user",
+    },
+    requirePasswordReset: {
+      type: Boolean,
+      default: false,
     },
     onboardingStatus: {
       type: String,

@@ -1,14 +1,19 @@
 const { fileTypeFromFile } = require("file-type");
 const fs = require("fs");
 const path = require("path");
+const bcrypt = require("bcrypt");
 const User = require("../models/user.model");
 const Team = require("../models/teams.model");
+const Workspace = require("../models/workspace.model");
 const Component = require("../models/component.model");
 const Project = require("../models/project.model");
 const { updateProfileValidation } = require("./validation/profileValidation");
 const {
   updateNotificationValidation,
 } = require("./validation/notificationValidation");
+const {
+  createUserByAdminValidation,
+} = require("./validation/Usermanagementvalidation");
 
 const getMyProfile = async (req, res, next) => {
   try {
@@ -202,6 +207,93 @@ const getUserStats = async (req, res, next) => {
   }
 };
 
+// Used by CreateUserModal on the frontend (admin-only)
+const createUserByAdmin = async (req, res, next) => {
+  if (!req.user || req.user.role !== "admin") {
+    return res.status(403).json({
+      msg: "Forbidden: You do not have permission to perform this action",
+    });
+  }
+
+  const { error, value } = createUserByAdminValidation.validate(req.body, {
+    abortEarly: false,
+    stripUnknown: true,
+  });
+
+  if (error) {
+    return res
+      .status(400)
+      .json({ msg: error.details.map((err) => err.message) });
+  }
+
+  try {
+    const existingUser = await User.findOne({
+      $or: [{ email: value.email }, { username: value.username }],
+    });
+
+    if (existingUser) {
+      return res
+        .status(400)
+        .json({ msg: "Email or Username already in use" });
+    }
+
+    if (value.workspace) {
+      const workspace = await Workspace.findById(value.workspace);
+      if (!workspace) {
+        return res.status(404).json({ msg: "Workspace not found" });
+      }
+    }
+
+    let team = null;
+    if (value.team) {
+      team = await Team.findById(value.team);
+      if (!team) {
+        return res.status(404).json({ msg: "Team not found" });
+      }
+    }
+
+    const hashedPassword = await bcrypt.hash(value.password, 12);
+
+    const newUser = await User.create({
+      firstName: value.firstName,
+      lastName: value.lastName,
+      username: value.username,
+      email: value.email,
+      password: hashedPassword,
+      role: value.role,
+      level: value.level,
+      workspaceAccess: value.workspace ? [value.workspace] : [],
+      team: value.team || null,
+      requirePasswordReset: value.requirePasswordReset,
+      accountStatus:
+        value.invitationOption === "send" ? "invited" : "pending",
+    });
+
+    if (team) {
+      team.members.push(newUser._id);
+      await team.save();
+    }
+
+    // NOTE: no email provider is wired up yet (no nodemailer/SMTP config
+    // in this project). When invitationOption === "send" we mark the
+    // account as "invited" here; hook up the actual invite email later.
+
+    const userToReturn = await User.findById(newUser._id)
+      .select("-password")
+      .populate("team", "teamName");
+
+    res.status(201).json({
+      msg:
+        value.invitationOption === "send"
+          ? `Invitation sent to ${newUser.email}`
+          : "User created successfully",
+      user: userToReturn,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const getAllUsers = async (req, res, next) => {
   try {
     const users = await User.find()
@@ -260,6 +352,7 @@ module.exports = {
   updateNotificationPreference,
   getUserStats,
   getAllUsers,
+  createUserByAdmin,
   deactivateUserById,
   toggleSuspendUser 
 };

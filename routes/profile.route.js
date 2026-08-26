@@ -21,6 +21,12 @@ router.patch(
 );
 router.get("/stats/overview", authMiddleware, profileController.getUserStats);
 router.get("/", authMiddleware, profileController.getAllUsers);
+router.post(
+  "/",
+  authMiddleware,
+  CheckRole("admin"),
+  profileController.createUserByAdmin,
+);
 router.delete(
   "/:userId",
   authMiddleware,
