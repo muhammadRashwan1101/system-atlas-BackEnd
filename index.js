@@ -12,6 +12,7 @@ const profileRouter = require('./routes/profile.route');
 const teamLeadRoutes = require('./routes/teamLeadRoutes');
 const teamRoutes = require('./routes/team.routes');
 const wizardRoutes = require('./routes/wizard.routes');
+const invitationRouter = require('./routes/invitation.routes');
 // Middleware
 const globalErrorHandler = require('./middlewares/globalErrorHandler');
 
@@ -32,12 +33,13 @@ app.use('/api/profile', profileRouter);
 app.use('/api/team-leads', teamLeadRoutes);
 app.use('/api/wizard', wizardRoutes);
 app.use('/api/teams', teamRoutes);
+app.use('/api/invitations', invitationRouter);
 app.use('/uploads', express.static('uploads'));
 
 app.use(globalErrorHandler)
 
 connectDB()
 
-app.listen(process.env.PORT || 8000, () => {
-    console.log(`Server is running on port ${process.env.PORT || 8000}`);
+app.listen(process.env.PORT || 3000, () => {
+    console.log(`Server is running on port ${process.env.PORT || 3000}`);
 });
