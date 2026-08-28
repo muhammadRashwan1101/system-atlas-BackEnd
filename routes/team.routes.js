@@ -1,4 +1,4 @@
-const router = require("express").Router();
+﻿const router = require("express").Router();
 const authMiddleware = require("../middlewares/authMiddleware");
 const teamController = require("../controllers/team.controller");
 
@@ -6,9 +6,10 @@ const teamController = require("../controllers/team.controller");
 router.post("/", authMiddleware, teamController.createTeam);
 router.get("/", authMiddleware, teamController.getTeams);
 
-// Read Single, Update & Delete
+// Read Single, Update, Add Member & Delete
 router.get("/:id", authMiddleware, teamController.getTeamById);
 router.put("/:id", authMiddleware, teamController.updateTeam);
+router.post("/:id/members", authMiddleware, teamController.addMember);
 router.delete("/:id", authMiddleware, teamController.deleteTeam);
 
 module.exports = router;

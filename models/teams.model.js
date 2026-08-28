@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+﻿const mongoose = require("mongoose");
 
 const teamSchema = new mongoose.Schema({
   teamName: {
@@ -28,6 +28,11 @@ const teamSchema = new mongoose.Schema({
       "QA", "Other"
     ]
   },
+  workspaceId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Workspace",
+    default: null
+  },
   teamLead: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
@@ -43,8 +48,17 @@ const teamSchema = new mongoose.Schema({
   }],
   status: {
     type: String,
-    enum: ["active", "inactive", "archived"],
-    default: "active"
+    enum: [
+      "ACTIVE", "REVIEW", "SUSPENDED", "INACTIVE",
+      "active", "review", "suspended", "inactive", "archived"
+    ],
+    default: "ACTIVE"
+  },
+  docCoverage: {
+    type: Number,
+    min: 0,
+    max: 100,
+    default: 85
   }
 }, { timestamps: true });
 

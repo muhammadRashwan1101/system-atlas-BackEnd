@@ -1,11 +1,11 @@
 ﻿const mongoose = require("mongoose");
 const User = require("../../models/user.model");
+const Project = require("../../models/project.model");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { loginValidation, signUpValidation } = require("../validation/authValidation");
 
 const register = async (req, res, next) => {
-    // If name is provided instead of firstName/lastName, derive them
     if (req.body.name && (!req.body.firstName || !req.body.lastName)) {
         const parts = req.body.name.trim().split(" ");
         req.body.firstName = req.body.firstName || parts[0] || "User";
@@ -18,7 +18,6 @@ const register = async (req, res, next) => {
     });
 
     if (error) {
-        console.log(error.details.map((err) => err.message));
         return res.status(400).json({ msg: error.details.map((err) => err.message) });
     }
 
@@ -135,6 +134,64 @@ const currentUser = async (req, res, next) => {
     }
 };
 
+const getUsers = async (req, res, next) => {
+    try {
+        const { search, role, excludeMaxProjects } = req.query;
+        const query = {};
+
+        if (role && role !== "All" && role !== "All Roles") {
+            query.role = { $regex: new RegExp(`^${role}$`, "i") };
+        }
+
+        if (search && search.trim()) {
+            const cleanSearch = search.trim();
+            query.$or = [
+                { firstName: { $regex: cleanSearch, $options: "i" } },
+                { lastName: { $regex: cleanSearch, $options: "i" } },
+                { email: { $regex: cleanSearch, $options: "i" } },
+                { jobTitle: { $regex: cleanSearch, $options: "i" } },
+                { department: { $regex: cleanSearch, $options: "i" } }
+            ];
+        }
+
+        const rawUsers = await User.find(query).select("-password");
+        const userIds = rawUsers.map((u) => u._id);
+
+        const projectAgg = await Project.aggregate([
+            { $match: { ownerId: { $in: userIds } } },
+            { $group: { _id: "$ownerId", count: { $sum: 1 } } }
+        ]);
+
+        const projectCountMap = new Map();
+        projectAgg.forEach((p) => projectCountMap.set(p._id.toString(), p.count));
+
+        let users = rawUsers.map((u) => {
+            const uObj = u.toObject();
+            const projectsCount = projectCountMap.get(u._id.toString()) || 0;
+            return {
+                ...uObj,
+                id: uObj._id,
+                name: u.fullName,
+                projectsCount,
+                isMaxProjects: projectsCount >= 3
+            };
+        });
+
+        // If excludeMaxProjects is true, filter out users who have reached the 3 project limit
+        if (excludeMaxProjects === "true" || excludeMaxProjects === true) {
+            users = users.filter((u) => u.projectsCount < 3);
+        }
+
+        res.status(200).json({
+            success: true,
+            count: users.length,
+            users
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
 const setNewPassword = async (req, res, next) => {
     try {
         const { newPassword, confirmPassword, password } = req.body;
@@ -187,7 +244,6 @@ const setNewPassword = async (req, res, next) => {
     }
 };
 
-
 const completeOnboarding = async (req, res, next) => {
     try {
         const user = await User.findById(req.user.id);
@@ -220,10 +276,72 @@ const completeOnboarding = async (req, res, next) => {
     }
 };
 
+
+const updateUserStatus = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { status, accountStatus } = req.body;
+        const newStatus = (status || accountStatus || 'active').toLowerCase();
+
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ msg: 'User not found' });
+        }
+
+        user.accountStatus = newStatus === 'suspended' ? 'inactive' : 'active';
+        user.status = newStatus.toUpperCase();
+        await user.save();
+
+        res.status(200).json({
+            msg: `User status updated to ${newStatus}`,
+            user: {
+                id: user._id,
+                name: user.fullName,
+                status: user.status,
+                accountStatus: user.accountStatus
+            }
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+const deleteUser = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const user = await User.findByIdAndDelete(id);
+        if (!user) {
+            return res.status(404).json({ msg: 'User not found' });
+        }
+        res.status(200).json({ msg: 'User deleted successfully', id });
+    } catch (err) {
+        next(err);
+    }
+};
+
+const resetUserPassword = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ msg: 'User not found' });
+        }
+        user.mustChangePassword = true;
+        await user.save();
+        res.status(200).json({ msg: 'Password reset flagged. User will be required to reset password on next login.', id });
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
+    updateUserStatus,
+    deleteUser,
+    resetUserPassword,
     register,
     login,
     currentUser,
+    getUsers,
     setNewPassword,
     completeOnboarding
 };
