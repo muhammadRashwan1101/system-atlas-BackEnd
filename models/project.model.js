@@ -25,7 +25,7 @@ const projectSchema = new mongoose.Schema({
     },
     systemTopology: {
         type: String,
-        enum: ["monolithic", "microservices", "event driven", "hybrid"],
+        enum: ["monolithic", "microservices", "event_driven", "hybrid"],
 
     },
     tags: [{
@@ -50,10 +50,10 @@ const projectSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Workspace"
     },
- status: {
+status: {
     type: String,
-    enum: ["active", "inactive"],
-    default: "active"
+    enum: ["ACTIVE", "CRITICAL", "SUSPENDED", "INACTIVE", "DEVELOPMENT"],
+    default: "ACTIVE"
 }
 }, { timestamps: true })
 

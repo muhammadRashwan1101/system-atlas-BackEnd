@@ -1,6 +1,11 @@
-const Joi = require('joi');
+﻿const Joi = require('joi');
 
-// 1. Create Team Schema (All required fields for creating a new team)
+const validStatuses = [
+    "ACTIVE", "REVIEW", "SUSPENDED", "INACTIVE",
+    "active", "review", "suspended", "inactive", "archived"
+];
+
+// 1. Create Team Schema
 const createTeamSchema = Joi.object({
     teamName: Joi.string()
         .trim()
@@ -45,6 +50,14 @@ const createTeamSchema = Joi.object({
             'any.required': 'category field is required'
         }),
 
+    workspaceId: Joi.string()
+        .hex()
+        .length(24)
+        .allow(null, '')
+        .messages({
+            'string.length': 'workspaceId must be a valid 24-character MongoDB ObjectId'
+        }),
+
     teamLead: Joi.string()
         .hex()
         .length(24)
@@ -65,11 +78,16 @@ const createTeamSchema = Joi.object({
         .default([]),
 
     status: Joi.string()
-        .valid("active", "inactive", "archived")
-        .default("active")
+        .valid(...validStatuses)
+        .default("ACTIVE"),
+
+    docCoverage: Joi.number()
+        .min(0)
+        .max(100)
+        .default(85)
 });
 
-
+// 2. Update Team Schema
 const updateTeamSchema = Joi.object({
     teamName: Joi.string().trim().min(2).max(100),
     teamCode: Joi.string().trim().uppercase().min(2).max(10),
@@ -79,15 +97,17 @@ const updateTeamSchema = Joi.object({
         "Mobile", "Security", "Data Science", "AI/ML", "UI/UX", 
         "QA", "Other"
     ),
+    workspaceId: Joi.string().hex().length(24).allow(null, ''),
     teamLead: Joi.string().hex().length(24).messages({
         'string.length': 'teamLead must be a valid 24-character MongoDB ObjectId'
     }),
     responsibilities: Joi.array().items(Joi.string().trim().min(3)),
     members: Joi.array().items(Joi.string().hex().length(24)),
-    status: Joi.string().valid("active", "inactive", "archived")
+    status: Joi.string().valid(...validStatuses),
+    docCoverage: Joi.number().min(0).max(100)
 }).min(1); 
 
-
+// 3. Validate ID Parameter Schema
 const validateTeamIdSchema = Joi.object({
     id: Joi.string()
         .hex()
@@ -98,7 +118,6 @@ const validateTeamIdSchema = Joi.object({
             'any.required': 'Team ID parameter is required'
         })
 });
-
 
 module.exports = {
     createTeamSchema,
